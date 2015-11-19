@@ -15,7 +15,7 @@
   (Charset/forName "UTF-8"))
 
 
-(def ^:no-doc max-header-length
+(def ^:no-doc ^:const max-header-length
   "The maximum length (in bytes) a header path can be."
   127)
 
