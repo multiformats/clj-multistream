@@ -10,6 +10,36 @@
     java.nio.charset.Charset))
 
 
+(def paths
+  "A map of standard header paths to represent various codecs. Drawn from the
+  multicodec standards document."
+  {:binary "/bin/"  ; raw binary
+   :base2  "/b2/"   ; ascii base-2 (binary)
+   :hex    "/b16/"  ; ascii base-16 (hexadecimal)
+   :base32 "/b32/"  ; ascii base-32
+   :base58 "/b58/"  ; ascii base-58
+   :base64 "/b64/"  ; ascii base-64
+
+   ; JSONs
+   :json   "/json/"
+   :cbor   "/cbor/"
+   :bson   "/bson/"
+   :bjson  "/bjson/"
+   :ubjson "/ubjson/"
+
+   ; Protobuf
+   :protobuf "/protobuf/"  ; Protocol Buffers
+   :capnp    "/capnp/"     ; Cap-n-Proto
+   :flatbuf  "/flatbuf/"   ; FlatBuffers
+
+   ; Archives
+   :tar "/tar/"
+   :zip "/zip/"
+
+   ; Images
+   :png "/png/"})
+
+
 (def ^java.nio.charset.Charset header-charset
   "The character set that codec headers are encoded with."
   (Charset/forName "UTF-8"))
