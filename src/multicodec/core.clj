@@ -10,9 +10,19 @@
     java.nio.charset.Charset))
 
 
+(def ^:no-doc ^:const max-header-length
+  "The maximum length (in bytes) a header path can be."
+  127)
+
+
+(def ^java.nio.charset.Charset header-charset
+  "The character set that codec headers are encoded with."
+  (Charset/forName "UTF-8"))
+
+
 (def paths
-  "A map of standard header paths to represent various codecs. Drawn from the
-  multicodec standards document."
+  "Map of codec keywords to header paths. Drawn from the multicodec standards
+  document."
   {:binary "/bin/"  ; raw binary
    :base2  "/b2/"   ; ascii base-2 (binary)
    :hex    "/b16/"  ; ascii base-16 (hexadecimal)
@@ -40,15 +50,8 @@
    :png "/png/"})
 
 
-(def ^java.nio.charset.Charset header-charset
-  "The character set that codec headers are encoded with."
-  (Charset/forName "UTF-8"))
 
-
-(def ^:no-doc ^:const max-header-length
-  "The maximum length (in bytes) a header path can be."
-  127)
-
+;; ## Encoding
 
 (defn encode-header
   "Return the byte-encoded version of the given header path.
@@ -67,6 +70,18 @@
       (System/arraycopy path-bytes 0 encoded 1 length)
       encoded)))
 
+
+(defn write-header!
+  "Writes a multicodec header for `path` to the given stream. Returns the number
+  of bytes written."
+  [^OutputStream output path]
+  (let [header (encode-header path)]
+    (.write output header)
+    (count header)))
+
+
+
+;; ## Decoding
 
 (defn- take-bytes!
   "Attempts to read `length` bytes from the given stream. Returns a byte array with
@@ -99,12 +114,3 @@
                  (str "Last byte in header is not a newline: "
                       (pr-str (.charAt header (dec (count header))))))))
       (str/trim-newline header))))
-
-
-(defn write-header!
-  "Writes a multicodec header for `path` to the given stream. Returns the number
-  of bytes written."
-  [^OutputStream output path]
-  (let [header (encode-header path)]
-    (.write output header)
-    (count header)))
