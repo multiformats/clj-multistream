@@ -7,4 +7,10 @@
   :deploy-branches ["master"]
 
   :dependencies
-  [[org.clojure/clojure "1.7.0"]])
+  [[org.clojure/clojure "1.7.0"]]
+
+  :codox
+  {:metadata {:doc/format :markdown}
+   :source-uri "https://github.com/greglook/clj-multicodec/blob/master/{filepath}#L{line}"
+   :doc-paths [""]
+   :output-path "doc/api"})
