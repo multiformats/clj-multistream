@@ -9,4 +9,8 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ...
 
-[Unreleased]: https://github.com/greglook/clj-multicodec/compare/0.0.0...HEAD
+## 0.1.0 - 2015-11-19
+
+Initial project release
+
+[Unreleased]: https://github.com/greglook/clj-multicodec/compare/0.1.0...HEAD
