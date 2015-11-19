@@ -10,7 +10,7 @@
     java.nio.charset.Charset))
 
 
-(def header-charset
+(def ^java.nio.charset.Charset header-charset
   "The character set that codec headers are encoded with."
   (Charset/forName "UTF-8"))
 
