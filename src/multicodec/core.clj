@@ -38,15 +38,6 @@
       encoded)))
 
 
-(defn write-header!
-  "Writes a multicodec header for `path` to the given stream. Returns the number
-  of bytes written."
-  [^OutputStream output path]
-  (let [header (encode-header path)]
-    (.write output header)
-    (count header)))
-
-
 (defn- take-bytes!
   "Attempts to read `length` bytes from the given stream. Returns a byte array with
   the read bytes."
@@ -78,3 +69,12 @@
                  (str "Last byte in header is not a newline: "
                       (pr-str (.charAt header (dec (count header))))))))
       (str/trim-newline header))))
+
+
+(defn write-header!
+  "Writes a multicodec header for `path` to the given stream. Returns the number
+  of bytes written."
+  [^OutputStream output path]
+  (let [header (encode-header path)]
+    (.write output header)
+    (count header)))
