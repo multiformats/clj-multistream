@@ -6,6 +6,9 @@
 
   :deploy-branches ["master"]
 
+  :plugins
+  [[lein-cloverage "1.0.6"]]
+
   :dependencies
   [[org.clojure/clojure "1.7.0"]]
 
