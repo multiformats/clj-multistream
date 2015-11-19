@@ -5,7 +5,8 @@
   (:import
     (java.io
       IOException
-      InputStream)
+      InputStream
+      OutputStream)
     java.nio.charset.Charset))
 
 
@@ -14,23 +15,39 @@
   (Charset/forName "UTF-8"))
 
 
+(def max-header-length
+  "The maximum length (in bytes) a header path can be."
+  127)
+
+
 (defn encode-header
-  "Return the byte-encoded version of the given header path."
+  "Return the byte-encoded version of the given header path.
+
+  The given path is trimmed and has a newline appended to it before encoding."
   ^bytes
   [path]
-  (let [path-bytes (-> path str/trim (str "\n") (.getBytes header-charset))
+  (let [path-bytes (-> path (str/trim) (str "\n") (.getBytes header-charset))
         length (count path-bytes)]
-    (when (> length 127)
+    (when (> length max-header-length)
       (throw (IllegalArgumentException.
-               (str "Header paths larger than 127 bytes are not supported yet: "
-                    (pr-str path) " has " length))))
+               (format "Header paths longer than %d bytes are not supported: %s has %d"
+                       max-header-length (pr-str path) length))))
     (let [encoded (byte-array (inc length))]
       (aset-byte encoded 0 (byte length))
       (System/arraycopy path-bytes 0 encoded 1 length)
       encoded)))
 
 
-(defn- read-stream!
+(defn write-header!
+  "Writes a multicodec header for `path` to the given stream. Returns the number
+  of bytes written."
+  [^OutputStream output path]
+  (let [header (encode-header path)]
+    (.write output header)
+    (count header)))
+
+
+(defn- take-bytes!
   "Attempts to read `length` bytes from the given stream. Returns a byte array with
   the read bytes."
   ^bytes
@@ -44,18 +61,18 @@
           content)))))
 
 
-(defn read-codec!
+(defn read-header!
   "Attempts to read a multicodec header from the given stream. Returns the
   header path read. Throws an IOException if the stream does not have a valid
   header or there is an error reading from the stream."
   ^String
   [^InputStream input]
   (let [length (.read input)]
-    (when-not (pos? length)
+    (when-not (< length 128)
       (throw (IOException.
                (format "First byte in stream is not a valid header length: %02x"
                        length))))
-    (let [header (String. (read-stream! input length) header-charset)]
+    (let [header (String. (take-bytes! input length) header-charset)]
       (when-not (.endsWith header "\n")
         (throw (IOException.
                  (str "Last byte in header is not a newline: "
