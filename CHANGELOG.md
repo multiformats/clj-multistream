@@ -7,6 +7,10 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+...
+
+## [0.2.0] - 2015-11-19
+
 ### Added
 - `multicodec.core/paths` provides a collection of standard codec paths to use
   for various encodings.
@@ -15,4 +19,5 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 Initial project release
 
-[Unreleased]: https://github.com/greglook/clj-multicodec/compare/0.1.0...HEAD
+[Unreleased]: https://github.com/greglook/clj-multicodec/compare/0.2.0...HEAD
+[0.2.0]: https://github.com/greglook/clj-multicodec/compare/0.1.0...0.2.0
