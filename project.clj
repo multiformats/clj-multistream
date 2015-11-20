@@ -1,4 +1,4 @@
-(defproject mvxcvi/multicodec "0.2.0-SNAPSHOT"
+(defproject mvxcvi/multicodec "0.3.0-SNAPSHOT"
   :description "Clojure implementation of the multicodec standard."
   :url "https://github.com/greglook/clj-multicodec"
   :license {:name "Public Domain"
