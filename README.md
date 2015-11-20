@@ -1,6 +1,10 @@
 clj-multicodec
 ==============
 
+[![Build Status](https://travis-ci.org/greglook/clj-multicodec.svg?branch=develop)](https://travis-ci.org/greglook/clj-multicodec)
+[![Coverage Status](https://coveralls.io/repos/greglook/clj-multicodec/badge.svg?branch=develop&service=github)](https://coveralls.io/github/greglook/clj-multicodec?branch=develop)
+[![API codox](https://img.shields.io/badge/doc-API-blue.svg)](https://greglook.github.io/clj-multicodec/api/)
+
 A Clojure library implementing the
 [multicodec](https://github.com/jbenet/multicodec) standard. This provides a
 content-agnostic way to prefix binary data with its encoding in a way that is

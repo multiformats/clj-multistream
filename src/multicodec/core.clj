@@ -10,15 +10,48 @@
     java.nio.charset.Charset))
 
 
-(def header-charset
+(def ^:no-doc ^:const max-header-length
+  "The maximum length (in bytes) a header path can be."
+  127)
+
+
+(def ^java.nio.charset.Charset header-charset
   "The character set that codec headers are encoded with."
   (Charset/forName "UTF-8"))
 
 
-(def max-header-length
-  "The maximum length (in bytes) a header path can be."
-  127)
+(def paths
+  "Map of codec keywords to header paths. Drawn from the multicodec standards
+  document."
+  {:binary "/bin/"  ; raw binary
+   :base2  "/b2/"   ; ascii base-2 (binary)
+   :hex    "/b16/"  ; ascii base-16 (hexadecimal)
+   :base32 "/b32/"  ; ascii base-32
+   :base58 "/b58/"  ; ascii base-58
+   :base64 "/b64/"  ; ascii base-64
 
+   ; JSONs
+   :json   "/json/"
+   :cbor   "/cbor/"
+   :bson   "/bson/"
+   :bjson  "/bjson/"
+   :ubjson "/ubjson/"
+
+   ; Protobuf
+   :protobuf "/protobuf/"  ; Protocol Buffers
+   :capnp    "/capnp/"     ; Cap-n-Proto
+   :flatbuf  "/flatbuf/"   ; FlatBuffers
+
+   ; Archives
+   :tar "/tar/"
+   :zip "/zip/"
+
+   ; Images
+   :png "/png/"})
+
+
+
+;; ## Encoding
 
 (defn encode-header
   "Return the byte-encoded version of the given header path.
@@ -46,6 +79,9 @@
     (.write output header)
     (count header)))
 
+
+
+;; ## Decoding
 
 (defn- take-bytes!
   "Attempts to read `length` bytes from the given stream. Returns a byte array with
