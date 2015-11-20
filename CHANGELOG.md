@@ -7,7 +7,9 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
-...
+### Added
+- `multicodec.core/paths` provides a collection of standard codec paths to use
+  for various encodings.
 
 ## 0.1.0 - 2015-11-19
 
