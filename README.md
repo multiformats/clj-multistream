@@ -4,6 +4,7 @@ clj-multicodec
 [![Build Status](https://travis-ci.org/greglook/clj-multicodec.svg?branch=develop)](https://travis-ci.org/greglook/clj-multicodec)
 [![Coverage Status](https://coveralls.io/repos/greglook/clj-multicodec/badge.svg?branch=develop&service=github)](https://coveralls.io/github/greglook/clj-multicodec?branch=develop)
 [![API codox](https://img.shields.io/badge/doc-API-blue.svg)](https://greglook.github.io/clj-multicodec/api/)
+[![marginalia docs](http://b.repl.ca/v1/doc-marginalia-blue.png)](https://greglook.github.io/clj-multicodec/marginalia/uberdoc.html)
 [![Join the chat at https://gitter.im/greglook/clj-multicodec](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/greglook/clj-multicodec)
 
 A Clojure library implementing the
