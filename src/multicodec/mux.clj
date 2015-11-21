@@ -1,14 +1,24 @@
 (ns multicodec.mux
   "A multiplexing logical codec which switches between multiple internal codecs
   to read data. Uses internal functions to select codecs for reading and
-  writing:
+  writing.
 
   - `codecs` is a map from header paths to codecs. Each codec should return a
     path string when looking up `:header`.
   - `select-encoder` takes the collection of codecs and the value to be encoded
     and returns the selected codec to render the value with.
   - `select-decoder` takes the collection of codecs and the header path and
-    returns the codec to use."
+    returns the codec to use.
+
+  By default, the first codec given is used for all encoding. The codec's
+  `:header` is written first, then the codec is used to write the value.
+
+  When decoding, the multiplexer tries to read a multicodec header and looks up
+  the corresponding codec in the `codecs` map. The codec is used to read a
+  value from the remaining data.
+
+  As a consequence, the delegated codecs _must not_ write or expect to consume
+  their own headers!"
   (:require
     [multicodec.core :as mc]))
 
@@ -42,11 +52,7 @@
 
 (defn mux-codec
   "Creates a new multiplexing codec which delegates to the given collection of
-  codecs by reading and writing multicodec headers when coding.
-
-  Each codec should extend `Decoder` and provide a header path for the key
-  `:header`. The first codec should also extend `Encoder`, as by default it's
-  used for all encoding requests."
+  codecs by reading and writing multicodec headers when coding."
   [& codecs]
   (when-not (seq codecs)
     (throw (IllegalArgumentException.
