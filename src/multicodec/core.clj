@@ -114,3 +114,24 @@
                  (str "Last byte in header is not a newline: "
                       (pr-str (.charAt header (dec (count header))))))))
       (str/trim-newline header))))
+
+
+
+;; ## Codec Protocols
+
+(defprotocol Encoder
+  "An encoder converts values to binary sequences and writes the results to an
+  output stream."
+
+  (encode-to
+    [codec output value]
+    "Write the value as a sequence of bytes to the output stream. Returns the
+    number of bytes written."))
+
+
+(defprotocol Decoder
+  "A decoder reads binary sequences and interpretes them as Clojure values."
+
+  (decode-from
+    [codec input]
+    "Reads bytes from the input stream and returns the read value."))
