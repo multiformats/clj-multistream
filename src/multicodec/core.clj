@@ -1,5 +1,5 @@
 (ns multicodec.core
-  "Core multicodec definitions and methods."
+  "Core multicodec protocols and functions."
   (:import
     (java.io
       ByteArrayInputStream
@@ -8,7 +8,7 @@
 
 ;; ## Constants
 
-(def paths
+(def headers
   "Map of codec keywords to header paths, drawn from the multicodec standards
   document."
   {:binary "/bin/"  ; raw binary
