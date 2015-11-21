@@ -15,13 +15,13 @@
   127)
 
 
-(def ^java.nio.charset.Charset header-charset
+(def ^:no-doc ^java.nio.charset.Charset header-charset
   "The character set that codec headers are encoded with."
   (Charset/forName "UTF-8"))
 
 
 (def paths
-  "Map of codec keywords to header paths. Drawn from the multicodec standards
+  "Map of codec keywords to header paths, drawn from the multicodec standards
   document."
   {:binary "/bin/"  ; raw binary
    :base2  "/b2/"   ; ascii base-2 (binary)
@@ -54,9 +54,9 @@
 ;; ## Encoding
 
 (defn encode-header
-  "Return the byte-encoded version of the given header path.
+  "Returns the byte-encoding of the header path.
 
-  The given path is trimmed and has a newline appended to it before encoding."
+  The path is trimmed and has a newline appended to it before encoding."
   ^bytes
   [path]
   (let [path-bytes (-> path (str/trim) (str "\n") (.getBytes header-charset))
