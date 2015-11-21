@@ -135,3 +135,57 @@
   (decode-from
     [codec input]
     "Reads bytes from the input stream and returns the read value."))
+
+
+;; Logical codec which switches between multiple internal codecs to read data.
+;; Uses two internal functions to select codecs for reading and writing:
+;;
+;; `codecs` is a vector of maps with `:header` and `:codec` entries. The header
+;; can be either an exact path string or a pattern.
+;;
+;; `select-encoder` should take the collection of codecs and the value to be
+;; encoded and return the selected implementation to render the value with.
+;;
+;; `select-decoder` should take the collection of codecs and the header path
+;; and return the codec to use.
+(defrecord MuxCodec
+  [codecs select-encoder select-decoder]
+
+  Encoder
+
+  (encode-to
+    [this output value]
+    ; TODO: select encoder, write out header, use codec to write value
+    nil)
+
+
+  Decoder
+
+  (decode-from
+    [this input]
+    ; TODO: read header, select decoder, use codec to read value
+    nil))
+
+
+(defn- find-codec
+  [codecs header]
+  (some #(let [codec-key (:header %)]
+           (when (or (= header codec-key)
+                   (and (instance? java.util.regex.Pattern codec-key)
+                        (re-seq codec-key header)))
+             (:codec %)))
+        codecs))
+
+
+(defn mux-codec
+  "Creates a new multiplexing codec which delegates to the given collection of
+  codecs identified by header paths."
+  [primary-key primary-codec & more]
+  (when-not (even? (count more))
+    (throw (IllegalArgumentException.
+             "mux-codec requires an even number of arguments")))
+  (let [codecs (mapv #(hash-map :header (first %), :codec (second %))
+                     (partition 2 (list* primary-key primary-codec more)))]
+    (MuxCodec. codecs
+               (fn first-encoder [cs value] (first cs))
+               find-codec)))
