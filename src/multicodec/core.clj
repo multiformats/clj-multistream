@@ -123,8 +123,8 @@
   "An encoder converts values to binary sequences and writes the results to an
   output stream."
 
-  (encode-to
-    [codec output value]
+  (encode
+    [codec ^java.io.OutputStream output value]
     "Write the value as a sequence of bytes to the output stream. Returns the
     number of bytes written."))
 
@@ -132,8 +132,8 @@
 (defprotocol Decoder
   "A decoder reads binary sequences and interpretes them as Clojure values."
 
-  (decode-from
-    [codec input]
+  (decode
+    [codec ^java.io.InputStream input]
     "Reads bytes from the input stream and returns the read value."))
 
 
@@ -153,7 +153,7 @@
 
   Encoder
 
-  (encode-to
+  (encode
     [this output value]
     ; TODO: select encoder, write out header, use codec to write value
     nil)
@@ -161,7 +161,7 @@
 
   Decoder
 
-  (decode-from
+  (decode
     [this input]
     ; TODO: read header, select decoder, use codec to read value
     nil))
