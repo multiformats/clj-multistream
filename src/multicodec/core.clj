@@ -123,8 +123,8 @@
   "An encoder converts values to binary sequences and writes the results to an
   output stream."
 
-  (encode-to
-    [codec output value]
+  (encode
+    [codec ^java.io.OutputStream output value]
     "Write the value as a sequence of bytes to the output stream. Returns the
     number of bytes written."))
 
@@ -132,6 +132,67 @@
 (defprotocol Decoder
   "A decoder reads binary sequences and interpretes them as Clojure values."
 
-  (decode-from
-    [codec input]
+  (decode
+    [codec ^java.io.InputStream input]
     "Reads bytes from the input stream and returns the read value."))
+
+
+;; Logical codec which switches between multiple internal codecs to read data.
+;; Uses two internal functions to select codecs for reading and writing:
+;;
+;; `codecs` is a map from header paths to codecs. Each codec should return a
+;; path string when looking up `:header`.
+;;
+;; `select-encoder` should take the collection of codecs and the value to be
+;; encoded and return the selected codec map to render the value with.
+;;
+;; `select-decoder` should take the collection of codecs and the header path
+;; and return the codec to use.
+(defrecord MuxCodec
+  [codecs select-encoder select-decoder]
+
+  Encoder
+
+  (encode
+    [this output value]
+    (if-let [codec (select-encoder codecs value)]
+      (let [hlen (write-header! output (:header codec))
+            clen (encode codec output value)]
+        (+ hlen clen))
+      (throw (IllegalStateException.
+               (str "No encoder selected for value: " (pr-str value))))))
+
+
+  Decoder
+
+  (decode
+    [this input]
+    (let [header (read-header! input)]
+      (if-let [codec (select-decoder codecs header)]
+        (decode codec input)
+        (throw (IllegalStateException.
+                 (str "No decoder selected for header: "
+                      (pr-str header))))))))
+
+
+(defn mux-codec
+  "Creates a new multiplexing codec which delegates to the given collection of
+  codecs by reading and writing multicodec headers when coding.
+
+  Each codec should extend `Decoder` and provide a header path for the key
+  `:header`. The first codec must also extend `Encoder`, as by default it's
+  used for all encoding requests. This logic can be changed by setting a
+  different function for `:select-encoder` after construction."
+  [& codecs]
+  (when-not (seq codecs)
+    (throw (IllegalArgumentException.
+             "mux-codec requires at least one codec")))
+  (when-not (every? (comp string? :header) codecs)
+    (throw (IllegalArgumentException.
+             (str "Every codec must specify a header path: "
+                  (pr-str (first (filter (comp complement string? :header)
+                                         codecs)))))))
+  (MuxCodec.
+    (into {} (map (juxt :header identity) codecs))
+    (constantly (first codecs))
+    get))
