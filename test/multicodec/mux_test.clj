@@ -1,7 +1,8 @@
 (ns multicodec.mux-test
   (:require
     [clojure.test :refer :all]
-    [multicodec.core :as multicodec]
+    [multicodec.core :as mc]
+    [multicodec.header :as mh]
     [multicodec.mux :refer [mux-codec]])
   (:import
     (java.io
@@ -15,12 +16,12 @@
     clojure.lang.ILookup
     (valAt [_ k]
       (when (= :header k) header))
-    multicodec/Encoder
+    mc/Encoder
     (encode! [_ output value]
       (let [content (.getBytes (pr-str value))]
         (.write output content)
         (count content)))
-    multicodec/Decoder
+    mc/Decoder
     (decode! [_ input]
       [tag (slurp input)])))
 
@@ -34,18 +35,18 @@
   (testing "encoding with no selected codec"
     (let [mux (assoc (mux-codec (mock-codec :foo "/bar"))
                      :select-encoder (constantly nil))]
-      (is (thrown? IllegalStateException (multicodec/encode! mux nil nil)))))
+      (is (thrown? IllegalStateException (mc/encode! mux nil nil)))))
   (let [mux (mux-codec
               (mock-codec :foo "/foo")
               (mock-codec :bar "/bar"))]
     (testing "encoding roundtrip"
-      (let [encoded (multicodec/encode mux 1234)]
+      (let [encoded (mc/encode mux 1234)]
         (is (= 10 (count encoded)) "should write the correct number of bytes")
-        (is (= "/foo" (multicodec/read-header! (ByteArrayInputStream. encoded))))
-        (is (= [:foo "1234"] (multicodec/decode mux encoded)))))
+        (is (= "/foo" (mh/read-header! (ByteArrayInputStream. encoded))))
+        (is (= [:foo "1234"] (mc/decode mux encoded)))))
     (testing "no-matching decoder"
       (let [baos (ByteArrayOutputStream.)]
-        (multicodec/write-header! baos "/baz/qux")
+        (mh/write-header! baos "/baz/qux")
         (.write baos (.getBytes "abcd"))
         (is (thrown? IllegalStateException
-                     (multicodec/decode mux (.toByteArray baos))))))))
+                     (mc/decode mux (.toByteArray baos))))))))

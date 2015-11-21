@@ -20,7 +20,8 @@
   As a consequence, the delegated codecs _must not_ write or expect to consume
   their own headers!"
   (:require
-    [multicodec.core :as mc]))
+    [multicodec.core :as mc]
+    [multicodec.header :as mh]))
 
 
 (defrecord MuxCodec
@@ -31,7 +32,7 @@
   (encode!
     [this output value]
     (if-let [codec (select-encoder codecs value)]
-      (let [hlen (mc/write-header! output (:header codec))
+      (let [hlen (mh/write-header! output (:header codec))
             clen (mc/encode! codec output value)]
         (+ hlen clen))
       (throw (IllegalStateException.
@@ -42,7 +43,7 @@
 
   (decode!
     [this input]
-    (let [header (mc/read-header! input)]
+    (let [header (mh/read-header! input)]
       (if-let [codec (select-decoder codecs header)]
         (mc/decode! codec input)
         (throw (IllegalStateException.
