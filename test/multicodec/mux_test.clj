@@ -39,15 +39,13 @@
               (mock-codec :foo "/foo")
               (mock-codec :bar "/bar"))]
     (testing "encoding roundtrip"
-      (let [baos (ByteArrayOutputStream.)
-            out-len (multicodec/encode! mux baos 1234)
-            encoded (.toByteArray baos)]
-        (is (= 10 out-len) "should write the correct number of bytes")
+      (let [encoded (multicodec/encode mux 1234)]
+        (is (= 10 (count encoded)) "should write the correct number of bytes")
         (is (= "/foo" (multicodec/read-header! (ByteArrayInputStream. encoded))))
-        (is (= [:foo "1234"] (multicodec/decode! mux (ByteArrayInputStream. encoded))))))
+        (is (= [:foo "1234"] (multicodec/decode mux encoded)))))
     (testing "no-matching decoder"
       (let [baos (ByteArrayOutputStream.)]
         (multicodec/write-header! baos "/baz/qux")
         (.write baos (.getBytes "abcd"))
         (is (thrown? IllegalStateException
-                     (multicodec/decode! mux (ByteArrayInputStream. (.toByteArray baos)))))))))
+                     (multicodec/decode mux (.toByteArray baos))))))))

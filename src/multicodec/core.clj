@@ -4,6 +4,8 @@
     [clojure.string :as str])
   (:import
     (java.io
+      ByteArrayInputStream
+      ByteArrayOutputStream
       IOException
       InputStream
       OutputStream)
@@ -137,4 +139,17 @@
     "Reads bytes from the input stream and returns the read value."))
 
 
-; TODO: `encode` and `decode` which operate on byte arrays
+(defn encode
+  "Converts a value to a binary sequence and returns them as a byte array."
+  ^bytes
+  [codec value]
+  (let [baos (ByteArrayOutputStream.)]
+    (encode! codec baos value)
+    (.toByteArray baos)))
+
+
+(defn decode
+  "Reads data from a byte array and returns the decoded value."
+  [codec ^bytes byte-data]
+  (let [bais (ByteArrayInputStream. byte-data)]
+    (decode! codec bais)))
