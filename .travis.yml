@@ -6,3 +6,10 @@ jdk:
   - oraclejdk7
 after_script:
   - bash -ex test/coveralls.sh
+notifications:
+  webhooks:
+    urls:
+      - https://webhooks.gitter.im/e/ce2a03da37b465fcae85
+    on_success: change
+    on_failure: always
+    on_start: never

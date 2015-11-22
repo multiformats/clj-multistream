@@ -1,27 +1,15 @@
 (ns multicodec.core
-  "Core multicodec definitions and methods."
-  (:require
-    [clojure.string :as str])
+  "Core multicodec protocols and functions."
   (:import
     (java.io
-      IOException
-      InputStream
-      OutputStream)
-    java.nio.charset.Charset))
+      ByteArrayInputStream
+      ByteArrayOutputStream)))
 
 
-(def ^:no-doc ^:const max-header-length
-  "The maximum length (in bytes) a header path can be."
-  127)
+;; ## Constants
 
-
-(def ^java.nio.charset.Charset header-charset
-  "The character set that codec headers are encoded with."
-  (Charset/forName "UTF-8"))
-
-
-(def paths
-  "Map of codec keywords to header paths. Drawn from the multicodec standards
+(def headers
+  "Map of codec keywords to header paths, drawn from the multicodec standards
   document."
   {:binary "/bin/"  ; raw binary
    :base2  "/b2/"   ; ascii base-2 (binary)
@@ -47,70 +35,48 @@
    :zip "/zip/"
 
    ; Images
-   :png "/png/"})
+   :png "/png/"
+
+   ; Sneak in some extras
+   :edn "/edn"
+   :utf8 "/text/UTF-8"})
 
 
 
 ;; ## Encoding
 
-(defn encode-header
-  "Return the byte-encoded version of the given header path.
+(defprotocol Encoder
+  "An encoder converts values to binary sequences and writes the results to an
+  output stream."
 
-  The given path is trimmed and has a newline appended to it before encoding."
+  (encode!
+    [codec ^java.io.OutputStream output value]
+    "Write the value as a sequence of bytes to the output stream. Returns the
+    number of bytes written."))
+
+
+(defn encode
+  "Converts a value to a binary sequence and returns them as a byte array."
   ^bytes
-  [path]
-  (let [path-bytes (-> path (str/trim) (str "\n") (.getBytes header-charset))
-        length (count path-bytes)]
-    (when (> length max-header-length)
-      (throw (IllegalArgumentException.
-               (format "Header paths longer than %d bytes are not supported: %s has %d"
-                       max-header-length (pr-str path) length))))
-    (let [encoded (byte-array (inc length))]
-      (aset-byte encoded 0 (byte length))
-      (System/arraycopy path-bytes 0 encoded 1 length)
-      encoded)))
-
-
-(defn write-header!
-  "Writes a multicodec header for `path` to the given stream. Returns the number
-  of bytes written."
-  [^OutputStream output path]
-  (let [header (encode-header path)]
-    (.write output header)
-    (count header)))
+  [codec value]
+  (let [baos (ByteArrayOutputStream.)]
+    (encode! codec baos value)
+    (.toByteArray baos)))
 
 
 
 ;; ## Decoding
 
-(defn- take-bytes!
-  "Attempts to read `length` bytes from the given stream. Returns a byte array with
-  the read bytes."
-  ^bytes
-  [^InputStream input length]
-  (let [content (byte-array length)]
-    (loop [offset 0
-           remaining length]
-      (let [n (.read input content offset remaining)]
-        (if (< n remaining)
-          (recur (+ offset n) (- remaining n))
-          content)))))
+(defprotocol Decoder
+  "A decoder reads binary sequences and interpretes them as Clojure values."
+
+  (decode!
+    [codec ^java.io.InputStream input]
+    "Reads bytes from the input stream and returns the read value."))
 
 
-(defn read-header!
-  "Attempts to read a multicodec header from the given stream. Returns the
-  header path read. Throws an IOException if the stream does not have a valid
-  header or there is an error reading from the stream."
-  ^String
-  [^InputStream input]
-  (let [length (.read input)]
-    (when-not (< length 128)
-      (throw (IOException.
-               (format "First byte in stream is not a valid header length: %02x"
-                       length))))
-    (let [header (String. (take-bytes! input length) header-charset)]
-      (when-not (.endsWith header "\n")
-        (throw (IOException.
-                 (str "Last byte in header is not a newline: "
-                      (pr-str (.charAt header (dec (count header))))))))
-      (str/trim-newline header))))
+(defn decode
+  "Reads data from a byte array and returns the decoded value."
+  [codec ^bytes byte-data]
+  (let [bais (ByteArrayInputStream. byte-data)]
+    (decode! codec bais)))

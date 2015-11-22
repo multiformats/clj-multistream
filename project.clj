@@ -1,4 +1,4 @@
-(defproject mvxcvi/multicodec "0.2.0"
+(defproject mvxcvi/multicodec "0.3.0"
   :description "Clojure implementation of the multicodec standard."
   :url "https://github.com/greglook/clj-multicodec"
   :license {:name "Public Domain"
@@ -14,6 +14,6 @@
 
   :codox
   {:metadata {:doc/format :markdown}
-   :source-uri "https://github.com/greglook/clj-multicodec/blob/master/{filepath}#L{line}"
+   :source-uri "https://github.com/greglook/clj-multicodec/blob/0.3.0/{filepath}#L{line}"
    :doc-paths [""]
    :output-path "doc/api"})
