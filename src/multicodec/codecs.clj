@@ -125,8 +125,8 @@
   (when-not (every? (comp string? :header) codecs)
     (throw (IllegalArgumentException.
              (str "Every codec must specify a header path: "
-                  (pr-str (first (filter (comp complement string? :header)
-                                         codecs)))))))
+                  (pr-str (filter (comp complement string? :header)
+                                  codecs))))))
   (MuxCodec.
     "/multicodec"
     (into {} (map (juxt :header identity) codecs))
@@ -166,7 +166,7 @@
 (defn bin-codec
   "Creates a new binary codec."
   []
-  (BinaryCodec. (mc/headers :bin)))
+  (BinaryCodec. (mc/headers :binary)))
 
 
 ;; Remove automatic constructor functions.
