@@ -26,8 +26,7 @@ accompanying `encode!`, and `Decoder` and `decode!`. These operate directly on
 output and input streams, respectively. The functions `encode` and `decode` (no
 bangs) write and read byte arrays instead of streams.
 
-There are a few simple codecs included as utilities, for example the
-`text-codec`:
+There are a few simple codecs included as utilities, for example the text codec:
 
 ```clojure
 => (require '[multicodec.core :as codec]
@@ -56,7 +55,7 @@ There are a few simple codecs included as utilities, for example the
 "abc 123!"
 ```
 
-More sophisticate usage involves reading and writing headers to determine what
+More sophisticated usage involves reading and writing headers to determine what
 the content is:
 
 ```clojure
