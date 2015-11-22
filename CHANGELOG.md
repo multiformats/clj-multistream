@@ -11,7 +11,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 - Add `Encoder` and `Decoder` protocols to core with stream-based methods
   `encode!` and `decode!`, respectively.
 - Add `encode` and `decode` to core which operate on byte arrays.
-- Add new `multicodec.mux` namespace with multiplexing codec implementation.
+- Add `multicodec.codecs` namespace with a few useful codec implementations.
 
 ### Changed
 - Rename `core/paths` to `core/headers`.
