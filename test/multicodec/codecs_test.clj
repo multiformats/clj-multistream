@@ -26,6 +26,29 @@
       [tag (slurp input)])))
 
 
+(deftest header-codec
+  (let [foo (mock-codec :foo "/foo")]
+    (testing "codec construction"
+      (let [codec (codecs/wrap-headers foo)]
+        (is (= "/foo" (:header codec))
+            "header should inherit wrapped codec by default"))
+      (let [codec (codecs/wrap-headers foo "/bar")]
+        (is (= "/bar" (:header codec))
+            "header should be settable with second arg")))
+    (let [codec (codecs/wrap-headers foo)]
+      (testing "encoding roundtrip"
+        (let [encoded (mc/encode codec 1234)]
+          (is (= "/foo" (mh/read-header! (ByteArrayInputStream. encoded)))
+              "should write codec header to content")
+          (is (= [:foo "1234"] (mc/decode codec encoded))
+              "should read header and delegate to codec")))
+      (testing "bad header"
+        (let [baos (ByteArrayOutputStream.)]
+          (codecs/write-header-encoded! "/bar" foo baos :abc)
+          (is (thrown? RuntimeException
+                       (mc/decode codec (.toByteArray baos)))))))))
+
+
 (deftest multiplex-codec
   (testing "codec construction"
     (is (thrown? IllegalArgumentException (codecs/mux-codec))
