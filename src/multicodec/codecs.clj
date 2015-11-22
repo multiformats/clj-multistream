@@ -188,6 +188,7 @@
     (let [writer (OutputStreamWriter. ^OutputStream output ^Charset charset)
           content (str value)]
       (.write writer content)
+      (.flush writer)
       (count (.getBytes content ^Charset charset))))
 
 

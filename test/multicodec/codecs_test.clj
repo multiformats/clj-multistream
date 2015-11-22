@@ -90,3 +90,22 @@
               "should decode bytes one-to-one")
           (is (every? true? (map = content decoded))
               "should decode same bytes as content"))))))
+
+
+(deftest text-codec
+  (let [text (codecs/text-codec)
+        content "the quick brown fox jumped over the lazy dog"]
+    (is (= "/text/UTF-8" (:header text))
+        "constructor should default to UTF-8")
+    (let [encoded (mc/encode text content)]
+      (testing "encoding"
+        (is (= (count encoded) (count content))
+            "should encode characters in bytes")
+        (is (= content (slurp encoded))
+            "should return same string"))
+      (testing "decoding"
+        (let [decoded (mc/decode text encoded)]
+          (is (string? decoded)
+              "should return a string")
+          (is (= content decoded)
+              "should decode to same string"))))))
