@@ -27,26 +27,25 @@
 
 
 (deftest header-codec
-  (let [foo (mock-codec :foo "/foo")]
+  (let [foo (mock-codec :foo "/foo")
+        wrapped (codecs/wrap-headers foo)]
     (testing "codec construction"
-      (let [codec (codecs/wrap-headers foo)]
-        (is (= "/foo" (:header codec))
-            "header should inherit wrapped codec by default"))
-      (let [codec (codecs/wrap-headers foo "/bar")]
-        (is (= "/bar" (:header codec))
+      (is (= "/foo" (:header wrapped))
+          "header should inherit wrapped codec by default") 
+      (let [wrapped (codecs/wrap-headers foo "/bar")]
+        (is (= "/bar" (:header wrapped))
             "header should be settable with second arg")))
-    (let [codec (codecs/wrap-headers foo)]
-      (testing "encoding roundtrip"
-        (let [encoded (mc/encode codec 1234)]
-          (is (= "/foo" (mh/read-header! (ByteArrayInputStream. encoded)))
-              "should write codec header to content")
-          (is (= [:foo "1234"] (mc/decode codec encoded))
-              "should read header and delegate to codec")))
-      (testing "bad header"
-        (let [baos (ByteArrayOutputStream.)]
-          (codecs/write-header-encoded! "/bar" foo baos :abc)
-          (is (thrown? RuntimeException
-                       (mc/decode codec (.toByteArray baos)))))))))
+    (testing "encoding roundtrip"
+      (let [encoded (mc/encode wrapped 1234)]
+        (is (= "/foo" (mh/read-header! (ByteArrayInputStream. encoded)))
+            "should write codec header to content")
+        (is (= [:foo "1234"] (mc/decode wrapped encoded))
+            "should read header and delegate to codec")))
+    (testing "bad header"
+      (let [baos (ByteArrayOutputStream.)]
+        (codecs/write-header-encoded! "/bar" foo baos :abc)
+        (is (thrown? RuntimeException
+                     (mc/decode wrapped (.toByteArray baos))))))))
 
 
 (deftest multiplex-codec
@@ -73,3 +72,21 @@
         (.write baos (.getBytes "abcd"))
         (is (thrown? RuntimeException
                      (mc/decode mux (.toByteArray baos))))))))
+
+
+(deftest bin-codec
+  (let [bin (codecs/bin-codec)
+        content (byte-array 10)]
+    (.nextBytes (java.security.SecureRandom.) content)
+    (let [encoded (mc/encode bin content)]
+      (testing "encoding"
+        (is (= (count encoded) (count content))
+            "should encode bytes one-to-one")
+        (is (every? true? (map = content encoded))
+            "should return same bytes as encoded"))
+      (testing "decoding"
+        (let [decoded (mc/decode bin encoded)]
+          (is (= (count decoded) (count content))
+              "should decode bytes one-to-one")
+          (is (every? true? (map = content decoded))
+              "should decode same bytes as content"))))))
