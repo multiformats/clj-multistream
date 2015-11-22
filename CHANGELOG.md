@@ -7,6 +7,10 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+...
+
+## [0.3.0] - 2015-11-21
+
 ### Added
 - Add `Encoder` and `Decoder` protocols to core with stream-based methods
   `encode!` and `decode!`, respectively.
@@ -29,5 +33,6 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 Initial project release
 
-[Unreleased]: https://github.com/greglook/clj-multicodec/compare/0.2.0...HEAD
+[Unreleased]: https://github.com/greglook/clj-multicodec/compare/0.3.0...HEAD
+[0.3.0]: https://github.com/greglook/clj-multicodec/compare/0.2.0...0.3.0
 [0.2.0]: https://github.com/greglook/clj-multicodec/compare/0.1.0...0.2.0
