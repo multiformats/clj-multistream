@@ -35,7 +35,11 @@
    :zip "/zip/"
 
    ; Images
-   :png "/png/"})
+   :png "/png/"
+
+   ; Sneak in some extras
+   :edn "/edn"
+   :utf8 "/text/UTF-8"})
 
 
 
