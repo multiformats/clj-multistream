@@ -1,4 +1,4 @@
-(ns multicodec.header_test
+(ns multicodec.header-test
   (:require
     [clojure.test :refer :all]
     [multicodec.header :as mh])
