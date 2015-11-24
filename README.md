@@ -44,8 +44,8 @@ There are a few simple codecs included as utilities, for example the text codec:
 ; Text encoding turns strings into bytes:
 => (def encoded (codec/encode text "abc 123!"))
 
-=> encoded
-#whidbey/bin "YWJjIDEyMyE="
+=> (seq encoded)
+(97 98 99 32 49 50 51 33)
 
 => (map char encoded)
 (\a \b \c \space \1 \2 \3 \!)
@@ -60,7 +60,9 @@ the content is:
 
 ```clojure
 ; Multiplexing codecs choose among multiple children:
-=> (def mux (codecs/mux-codec (codecs/text-codec) (codecs/bin-codec)))
+=> (def mux (codecs/mux-codec
+              :text (codecs/text-codec)
+              :bin  (codecs/bin-codec)))
 
 ; By default, the first codec is used for encoding:
 => (def encoded (codec/encode mux "abc 123!"))
