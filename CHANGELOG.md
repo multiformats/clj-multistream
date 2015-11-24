@@ -7,7 +7,8 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
-...
+### Changed
+- Rename key for binary codec from `:binary` to `:bin`.
 
 ## [0.3.0] - 2015-11-21
 

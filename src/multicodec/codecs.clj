@@ -166,7 +166,7 @@
 (defn bin-codec
   "Creates a new binary codec."
   []
-  (BinaryCodec. (mc/headers :binary)))
+  (BinaryCodec. (mc/headers :bin)))
 
 
 ;; Remove automatic constructor functions.

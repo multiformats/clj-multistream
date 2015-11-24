@@ -11,7 +11,7 @@
 (def headers
   "Map of codec keywords to header paths, drawn from the multicodec standards
   document."
-  {:binary "/bin/"  ; raw binary
+  {:bin    "/bin/"  ; raw binary
    :base2  "/b2/"   ; ascii base-2 (binary)
    :hex    "/b16/"  ; ascii base-16 (hexadecimal)
    :base32 "/b32/"  ; ascii base-32
