@@ -9,6 +9,8 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 - Rename key for binary codec from `:binary` to `:bin`.
+- MuxCodec now selects codecs by user-provided keys instead of directly. This
+  simplifies the implementation of new selection functions.
 
 ## [0.3.0] - 2015-11-21
 

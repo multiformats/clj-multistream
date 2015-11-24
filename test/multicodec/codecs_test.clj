@@ -52,15 +52,26 @@
   (testing "codec construction"
     (is (thrown? IllegalArgumentException (codecs/mux-codec))
         "construction with no codecs should throw exception")
-    (is (thrown? IllegalArgumentException (codecs/mux-codec (mock-codec :foo nil)))
+    (is (thrown? IllegalArgumentException (codecs/mux-codec :foo))
+        "construction with odd args should throw exception")
+    (is (thrown? IllegalArgumentException (codecs/mux-codec :foo (mock-codec :foo nil)))
         "construction with no-header arg should throw exception"))
-  (testing "encoding with no selected codec"
-    (let [mux (assoc (codecs/mux-codec (mock-codec :foo "/bar"))
-                     :select-encoder (constantly nil))]
-      (is (thrown? RuntimeException (mc/encode! mux nil nil)))))
   (let [mux (codecs/mux-codec
-              (mock-codec :foo "/foo")
-              (mock-codec :bar "/bar"))]
+              :foo (mock-codec :foo "/foo")
+              :bar (mock-codec :bar "/bar"))]
+    (testing "encoding with no selected codec"
+      (let [mux' (assoc mux :select-encoder (constantly nil))]
+        (is (thrown? RuntimeException (mc/encode! mux' nil nil))))
+      (let [mux' (assoc mux :select-encoder (constantly :baz))]
+        (is (thrown? RuntimeException (mc/encode! mux' nil nil)))))
+    (testing "decoding with no selected codec"
+      (let [mux' (assoc mux :select-decoder (constantly nil))]
+        (is (thrown? RuntimeException (mc/decode! mux' nil))))
+      (let [mux' (assoc mux :select-decoder (constantly :baz))]
+        (let [baos (ByteArrayOutputStream.)]
+          (mh/write-header! baos "/baz/")
+          (is (thrown? RuntimeException
+                       (mc/decode mux' (.toByteArray baos)))))))
     (testing "encoding roundtrip"
       (let [encoded (mc/encode mux 1234)]
         (is (= 10 (count encoded)) "should write the correct number of bytes")
