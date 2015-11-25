@@ -79,9 +79,8 @@ the content is:
 => (codec/decode mux encoded)
 "abc 123!"
 
-; Lets create a binary-encoded value - wrap-headers will prefix the header to
-; the encoded output:
-=> (def encoded (codec/encode (codecs/wrap-headers (codecs/bin-codec))
+; Lets create a binary-encoded value by selecting the bin codec:
+=> (def encoded (codec/encode (codecs/mux-select mux :bin)
                               (.getBytes "foo")))
 
 => (seq encoded)

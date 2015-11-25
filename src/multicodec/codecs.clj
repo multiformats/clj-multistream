@@ -71,14 +71,6 @@
 
 ;; ## Multiplexing Codec
 
-(defn- match-header
-  "Helper function for selecting a decoder. Returns the key for the first entry
-  whose codec header matches the one given."
-  [codecs header]
-  (some #(when (= header (:header (val %))) (key %))
-        codecs))
-
-
 ;; The mux codec uses a set of iternal functions to decide which codec to use
 ;; when encoding or decoding data.
 ;;
@@ -131,6 +123,19 @@
                   :header header}))))))
 
 
+;; Remove automatic constructor functions.
+(ns-unmap *ns* '->MuxCodec)
+(ns-unmap *ns* 'map->MuxCodec)
+
+
+(defn- match-header
+  "Helper function for selecting a decoder. Returns the key for the first entry
+  whose codec header matches the one given."
+  [codecs header]
+  (some #(when (= header (:header (val %))) (key %))
+        codecs))
+
+
 (defn mux-codec
   "Creates a new multiplexing codec which delegates to the given collection of
   codecs by reading and writing multicodec headers when coding.
@@ -164,9 +169,17 @@
       match-header)))
 
 
-;; Remove automatic constructor functions.
-(ns-unmap *ns* '->MuxCodec)
-(ns-unmap *ns* 'map->MuxCodec)
+(defn mux-select
+  "Convenience function for selecting a specific codec from a multiplexer. The
+  returned codec will encode and decode as the mux would, but only for that
+  subcodec."
+  [mux codec-key]
+  (if-let [codec (get (:codecs mux) codec-key)]
+    (wrap-headers codec)
+    (throw (ex-info (str "Multiplexer does not contain codec for key "
+                         (pr-str codec-key) " " (pr-str (keys (:codecs mux))))
+                    {:codec-keys (keys (:codecs mux))
+                     :key codec-key}))))
 
 
 

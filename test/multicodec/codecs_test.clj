@@ -72,6 +72,12 @@
           (mh/write-header! baos "/baz/")
           (is (thrown? RuntimeException
                        (mc/decode mux' (.toByteArray baos)))))))
+    (testing "codec selection"
+      (is (thrown? RuntimeException (codecs/mux-select mux :baz))
+          "should throw exception when selecting missing codec")
+      (let [encoded (mc/encode (codecs/mux-select mux :bar) 'abc-123)]
+        (is (= [:bar "abc-123"] (mc/decode mux encoded))
+            "should force writing with selected codec")))
     (testing "encoding roundtrip"
       (let [encoded (mc/encode mux 1234)]
         (is (= 10 (count encoded)) "should write the correct number of bytes")
