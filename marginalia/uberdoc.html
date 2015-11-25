@@ -2865,7 +2865,7 @@ net.brehaut.ClojureTools = (function (SH) {
     build_tree: build_tree
   };
 })(SyntaxHighlighter);
-</script><title>mvxcvi/multicodec -- Marginalia</title></head><body><table><tr><td class="docs"><div class="header"><h1 class="project-name"><a href="https://github.com/greglook/clj-multicodec">mvxcvi/multicodec</a></h1><h2 class="project-version">0.3.0</h2><br /><p>Clojure implementation of the multicodec standard.</p>
+</script><title>mvxcvi/multicodec -- Marginalia</title></head><body><table><tr><td class="docs"><div class="header"><h1 class="project-name"><a href="https://github.com/greglook/clj-multicodec">mvxcvi/multicodec</a></h1><h2 class="project-version">0.4.0</h2><br /><p>Clojure implementation of the multicodec standard.</p>
 </div><div class="dependencies"><h3>dependencies</h3><table><tr><td class="dep-name">org.clojure/clojure</td><td class="dotted"><hr /></td><td class="dep-version">1.7.0</td></tr></table></div></td><td class="codes" style="text-align: center; vertical-align: middle;color: #666;padding-right:20px"><br /><br /><br />(this space intentionally left almost blank)</td></tr><tr><td class="docs"><div class="toc"><a name="toc"><h3>namespaces</h3></a><ul><li><a href="#multicodec.codecs">multicodec.codecs</a></li><li><a href="#multicodec.core">multicodec.core</a></li><li><a href="#multicodec.header">multicodec.header</a></li></ul></div></td><td class="codes">&nbsp;</td></tr><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#multicodec.codecs" name="multicodec.codecs"><h1 class="project-name">multicodec.codecs</h1><a class="toc-link" href="#toc">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs"><p>Various simple and useful codec implementations.</p>
 
 <p>  All codec implementations <em>should</em> respond to <code>:header</code> with a path string
@@ -2916,35 +2916,58 @@ net.brehaut.ClojureTools = (function (SH) {
    (HeaderCodec. header codec)))</pre></td></tr><tr><td class="docs"><p>Remove automatic constructor functions.</p>
 </td><td class="codes"><pre class="brush: clojure">(ns-unmap *ns* '-&gt;HeaderCodec)
 (ns-unmap *ns* 'map-&gt;HeaderCodec)</pre></td></tr><tr><td class="docs"><h2>Multiplexing Codec</h2>
-</td><td class="codes"></td></tr><tr><td class="docs"><p>The mux codec uses a set of iternal functions to decide which codec to use
+</td><td class="codes"></td></tr><tr><td class="docs"><p>Helper function for selecting a decoder. Returns the key for the first entry
+  whose codec header matches the one given.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn- match-header
+  [codecs header]
+  (some #(when (= header (:header (val %))) (key %))
+        codecs))</pre></td></tr><tr><td class="docs"><p>The mux codec uses a set of iternal functions to decide which codec to use
 when encoding or decoding data.</p>
 
 <ul>
-<li><code>codecs</code> is a map from header paths to codecs.</li>
+<li><code>codecs</code> is a map from keys to codecs.</li>
 <li><code>select-encoder</code> takes the collection of codecs and the value to be encoded
-and returns the selected codec to render the value with.</li>
+and returns a key identifying the codec to write the value with.</li>
 <li><code>select-decoder</code> takes the collection of codecs and the header path and
-returns the codec to use.</li>
+returns a key identifying the codec to read the value with.</li>
 </ul>
 </td><td class="codes"><pre class="brush: clojure">(defrecord MuxCodec
   [header codecs select-encoder select-decoder]
   mc/Encoder
   (encode!
     [this output value]
-    (if-let [codec (select-encoder codecs value)]
-      (write-header-encoded! (:header codec) codec output value)
+    (if-let [codec-key (select-encoder codecs value)]
+      (if-let [codec (get codecs codec-key)]
+        (write-header-encoded! (:header codec) codec output value)
+        (throw (ex-info
+                 (str &quot;Selected encoder &quot; codec-key &quot; which is not present in&quot;
+                      &quot; the codec map &quot; (pr-str (seq (keys codecs)))
+                      &quot; for value: &quot; (pr-str value))
+                 {:codec-keys (keys codecs)
+                  :encoder codec-key
+                  :value value})))
       (throw (ex-info
                (str &quot;No encoder selected for value: &quot; (pr-str value))
-               {:value value}))))
+               {:codec-keys (keys codecs)
+                :value value}))))
   mc/Decoder
   (decode!
     [this input]
     (let [header (mh/read-header! input)]
-      (if-let [codec (select-decoder codecs header)]
-        (mc/decode! codec input)
+      (if-let [codec-key (select-decoder codecs header)]
+        (if-let [codec (get codecs codec-key)]
+          (mc/decode! codec input)
+          (throw (ex-info
+                   (str &quot;Selected decoder &quot; codec-key &quot; which is not present in&quot;
+                        &quot; the codec map &quot; (pr-str (seq (keys codecs)))
+                        &quot; for header: &quot; (pr-str header))
+                   {:codec-keys (keys codecs)
+                    :decoder codec-key
+                    :header header})))
         (throw (ex-info
                  (str &quot;No decoder selected for header: &quot; (pr-str header))
-                 {:header header}))))))</pre></td></tr><tr><td class="docs"><p>Creates a new multiplexing codec which delegates to the given collection of
+                 {:codec-keys (keys codecs)
+                  :header header}))))))</pre></td></tr><tr><td class="docs"><p>Creates a new multiplexing codec which delegates to the given collection of
   codecs by reading and writing multicodec headers when coding.</p>
 
 <p>  By default, the first codec given is used for all encoding. The codec's
@@ -2961,16 +2984,20 @@ returns the codec to use.</li>
   (when-not (seq codecs)
     (throw (IllegalArgumentException.
              &quot;mux-codec requires at least one codec&quot;)))
-  (when-not (every? (comp string? :header) codecs)
+  (when-not (even? (count codecs))
     (throw (IllegalArgumentException.
-             (str &quot;Every codec must specify a header path: &quot;
-                  (pr-str (filter (comp complement string? :header)
-                                  codecs))))))
-  (MuxCodec.
-    &quot;/multicodec&quot;
-    (into {} (map (juxt :header identity) codecs))
-    (constantly (first codecs))
-    get))</pre></td></tr><tr><td class="docs"><p>Remove automatic constructor functions.</p>
+             &quot;mux-codec must be given an even number of arguments&quot;)))
+  (let [codec-map (apply hash-map codecs)]
+    (when-let [bad-codecs (seq (remove (comp string? :header)
+                                       (vals codec-map)))]
+      (throw (IllegalArgumentException.
+               (str &quot;Every codec must specify a header path: &quot;
+                    (pr-str bad-codecs)))))
+    (MuxCodec.
+      &quot;/multicodec&quot;
+      codec-map
+      (constantly (first codecs))
+      match-header)))</pre></td></tr><tr><td class="docs"><p>Remove automatic constructor functions.</p>
 </td><td class="codes"><pre class="brush: clojure">(ns-unmap *ns* '-&gt;MuxCodec)
 (ns-unmap *ns* 'map-&gt;MuxCodec)</pre></td></tr><tr><td class="docs"><h2>Raw Binary</h2>
 </td><td class="codes"></td></tr><tr><td class="docs"><p>A simple codec which reads and writes raw binary data.</p>
@@ -2989,7 +3016,7 @@ returns the codec to use.</li>
       (.toByteArray baos))))</pre></td></tr><tr><td class="docs"><p>Creates a new binary codec.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn bin-codec
   []
-  (BinaryCodec. (mc/headers :binary)))</pre></td></tr><tr><td class="docs"><p>Remove automatic constructor functions.</p>
+  (BinaryCodec. (mc/headers :bin)))</pre></td></tr><tr><td class="docs"><p>Remove automatic constructor functions.</p>
 </td><td class="codes"><pre class="brush: clojure">(ns-unmap *ns* '-&gt;BinaryCodec)
 (ns-unmap *ns* 'map-&gt;BinaryCodec)</pre></td></tr><tr><td class="docs"><h2>Text</h2>
 </td><td class="codes"></td></tr><tr><td class="docs">
@@ -3025,7 +3052,7 @@ returns the codec to use.</li>
 </td><td class="codes"></td></tr><tr><td class="docs"><p>Map of codec keywords to header paths, drawn from the multicodec standards
   document.</p>
 </td><td class="codes"><pre class="brush: clojure">(def headers
-  {:binary &quot;/bin/&quot;  ; raw binary
+  {:bin    &quot;/bin/&quot;  ; raw binary
    :base2  &quot;/b2/&quot;   ; ascii base-2 (binary)
    :hex    &quot;/b16/&quot;  ; ascii base-16 (hexadecimal)
    :base32 &quot;/b32/&quot;  ; ascii base-32
