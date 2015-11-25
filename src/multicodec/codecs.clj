@@ -53,6 +53,11 @@
       (mc/decode! codec input))))
 
 
+;; Remove automatic constructor functions.
+(ns-unmap *ns* '->HeaderCodec)
+(ns-unmap *ns* 'map->HeaderCodec)
+
+
 (defn wrap-headers
   "Creates a new codec which will write the header for the wrapped codec before
   calling it. When decoding, it will read the header before calling the wrapped
@@ -61,11 +66,6 @@
    (wrap-headers codec (:header codec)))
   ([codec header]
    (HeaderCodec. header codec)))
-
-
-;; Remove automatic constructor functions.
-(ns-unmap *ns* '->HeaderCodec)
-(ns-unmap *ns* 'map->HeaderCodec)
 
 
 
@@ -193,15 +193,15 @@
       (.toByteArray baos))))
 
 
+;; Remove automatic constructor functions.
+(ns-unmap *ns* '->BinaryCodec)
+(ns-unmap *ns* 'map->BinaryCodec)
+
+
 (defn bin-codec
   "Creates a new binary codec."
   []
   (BinaryCodec. (mc/headers :bin)))
-
-
-;; Remove automatic constructor functions.
-(ns-unmap *ns* '->BinaryCodec)
-(ns-unmap *ns* 'map->BinaryCodec)
 
 
 
@@ -232,14 +232,14 @@
       (.toString writer))))
 
 
+;; Remove automatic constructor functions.
+(ns-unmap *ns* '->TextCodec)
+(ns-unmap *ns* 'map->TextCodec)
+
+
 (defn text-codec
   "Creates a new text codec. If a charset is not provided, it defaults to UTF-8."
   ([]
    (text-codec (Charset/forName "UTF-8")))
   ([charset]
    (TextCodec. (str "/text/" charset) charset)))
-
-
-;; Remove automatic constructor functions.
-(ns-unmap *ns* '->TextCodec)
-(ns-unmap *ns* 'map->TextCodec)
