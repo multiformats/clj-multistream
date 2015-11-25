@@ -5,7 +5,14 @@ All notable changes to this project will be documented in this file, which
 follows the conventions of [keepachangelog.com](http://keepachangelog.com/).
 This project adheres to [Semantic Versioning](http://semver.org/).
 
-## [Unreleased]
+## [0.4.0] - 2015-11-24
+
+### Changed
+- Rename key for binary codec from `:binary` to `:bin`.
+- MuxCodec now selects codecs by user-provided keys instead of directly. This
+  simplifies the implementation of new selection functions.
+
+## [0.3.0] - 2015-11-21
 
 ...
 
@@ -33,6 +40,6 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 Initial project release
 
-[Unreleased]: https://github.com/greglook/clj-multicodec/compare/0.3.0...HEAD
+[0.4.0]: https://github.com/greglook/clj-multicodec/compare/0.3.0...0.4.0
 [0.3.0]: https://github.com/greglook/clj-multicodec/compare/0.2.0...0.3.0
 [0.2.0]: https://github.com/greglook/clj-multicodec/compare/0.1.0...0.2.0

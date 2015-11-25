@@ -71,14 +71,22 @@
 
 ;; ## Multiplexing Codec
 
+(defn- match-header
+  "Helper function for selecting a decoder. Returns the key for the first entry
+  whose codec header matches the one given."
+  [codecs header]
+  (some #(when (= header (:header (val %))) (key %))
+        codecs))
+
+
 ;; The mux codec uses a set of iternal functions to decide which codec to use
 ;; when encoding or decoding data.
 ;;
-;; - `codecs` is a map from header paths to codecs.
+;; - `codecs` is a map from keys to codecs.
 ;; - `select-encoder` takes the collection of codecs and the value to be encoded
-;;   and returns the selected codec to render the value with.
+;;   and returns a key identifying the codec to write the value with.
 ;; - `select-decoder` takes the collection of codecs and the header path and
-;;   returns the codec to use.
+;;   returns a key identifying the codec to read the value with.
 (defrecord MuxCodec
   [header codecs select-encoder select-decoder]
 
@@ -86,11 +94,20 @@
 
   (encode!
     [this output value]
-    (if-let [codec (select-encoder codecs value)]
-      (write-header-encoded! (:header codec) codec output value)
+    (if-let [codec-key (select-encoder codecs value)]
+      (if-let [codec (get codecs codec-key)]
+        (write-header-encoded! (:header codec) codec output value)
+        (throw (ex-info
+                 (str "Selected encoder " codec-key " which is not present in"
+                      " the codec map " (pr-str (seq (keys codecs)))
+                      " for value: " (pr-str value))
+                 {:codec-keys (keys codecs)
+                  :encoder codec-key
+                  :value value})))
       (throw (ex-info
                (str "No encoder selected for value: " (pr-str value))
-               {:value value}))))
+               {:codec-keys (keys codecs)
+                :value value}))))
 
 
   mc/Decoder
@@ -98,11 +115,20 @@
   (decode!
     [this input]
     (let [header (mh/read-header! input)]
-      (if-let [codec (select-decoder codecs header)]
-        (mc/decode! codec input)
+      (if-let [codec-key (select-decoder codecs header)]
+        (if-let [codec (get codecs codec-key)]
+          (mc/decode! codec input)
+          (throw (ex-info
+                   (str "Selected decoder " codec-key " which is not present in"
+                        " the codec map " (pr-str (seq (keys codecs)))
+                        " for header: " (pr-str header))
+                   {:codec-keys (keys codecs)
+                    :decoder codec-key
+                    :header header})))
         (throw (ex-info
                  (str "No decoder selected for header: " (pr-str header))
-                 {:header header}))))))
+                 {:codec-keys (keys codecs)
+                  :header header}))))))
 
 
 (defn mux-codec
@@ -122,16 +148,20 @@
   (when-not (seq codecs)
     (throw (IllegalArgumentException.
              "mux-codec requires at least one codec")))
-  (when-not (every? (comp string? :header) codecs)
+  (when-not (even? (count codecs))
     (throw (IllegalArgumentException.
-             (str "Every codec must specify a header path: "
-                  (pr-str (filter (comp complement string? :header)
-                                  codecs))))))
-  (MuxCodec.
-    "/multicodec"
-    (into {} (map (juxt :header identity) codecs))
-    (constantly (first codecs))
-    get))
+             "mux-codec must be given an even number of arguments")))
+  (let [codec-map (apply hash-map codecs)]
+    (when-let [bad-codecs (seq (remove (comp string? :header)
+                                       (vals codec-map)))]
+      (throw (IllegalArgumentException.
+               (str "Every codec must specify a header path: "
+                    (pr-str bad-codecs)))))
+    (MuxCodec.
+      "/multicodec"
+      codec-map
+      (constantly (first codecs))
+      match-header)))
 
 
 ;; Remove automatic constructor functions.
@@ -166,7 +196,7 @@
 (defn bin-codec
   "Creates a new binary codec."
   []
-  (BinaryCodec. (mc/headers :binary)))
+  (BinaryCodec. (mc/headers :bin)))
 
 
 ;; Remove automatic constructor functions.
