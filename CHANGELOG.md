@@ -7,7 +7,8 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
-...
+### Added
+- Add `codecs/mux-select` convenience function.
 
 ## [0.4.0] - 2015-11-24
 
