@@ -71,6 +71,11 @@
 
 ;; ## Multiplexing Codec
 
+;; This var can be bound to find out what codec the mux used internally when
+;; encoding or decoding a value.
+(def ^:dynamic *dispatched-codec*)
+
+
 ;; The mux codec uses a set of iternal functions to decide which codec to use
 ;; when encoding or decoding data.
 ;;
@@ -86,9 +91,14 @@
 
   (encode!
     [this output value]
-    (if-let [codec-key (select-encoder codecs value)]
-      (if-let [codec (get codecs codec-key)]
-        (write-header-encoded! (:header codec) codec output value)
+    (let [codec-key (select-encoder codecs value)
+          codec (get codecs codec-key)]
+      (when-not codec-key
+        (throw (ex-info
+                 (str "No encoder selected for value: " (pr-str value))
+                 {:codec-keys (keys codecs)
+                  :value value})))
+      (when-not codec
         (throw (ex-info
                  (str "Selected encoder " codec-key " which is not present in"
                       " the codec map " (pr-str (seq (keys codecs)))
@@ -96,31 +106,34 @@
                  {:codec-keys (keys codecs)
                   :encoder codec-key
                   :value value})))
-      (throw (ex-info
-               (str "No encoder selected for value: " (pr-str value))
-               {:codec-keys (keys codecs)
-                :value value}))))
+      (when (bound? #'*dispatched-codec*)
+        (set! *dispatched-codec* codec-key))
+      (write-header-encoded! (:header codec) codec output value)))
 
 
   mc/Decoder
 
   (decode!
     [this input]
-    (let [header (mh/read-header! input)]
-      (if-let [codec-key (select-decoder codecs header)]
-        (if-let [codec (get codecs codec-key)]
-          (mc/decode! codec input)
-          (throw (ex-info
-                   (str "Selected decoder " codec-key " which is not present in"
-                        " the codec map " (pr-str (seq (keys codecs)))
-                        " for header: " (pr-str header))
-                   {:codec-keys (keys codecs)
-                    :decoder codec-key
-                    :header header})))
+    (let [header (mh/read-header! input)
+          codec-key (select-decoder codecs header)
+          codec (get codecs codec-key)]
+      (when-not codec-key
         (throw (ex-info
                  (str "No decoder selected for header: " (pr-str header))
                  {:codec-keys (keys codecs)
-                  :header header}))))))
+                  :header header})))
+      (when-not codec
+        (throw (ex-info
+                 (str "Selected decoder " codec-key " which is not present in"
+                      " the codec map " (pr-str (seq (keys codecs)))
+                      " for header: " (pr-str header))
+                 {:codec-keys (keys codecs)
+                  :decoder codec-key
+                  :header header})))
+      (when (bound? #'*dispatched-codec*)
+        (set! *dispatched-codec* codec-key))
+      (mc/decode! codec input))))
 
 
 ;; Remove automatic constructor functions.

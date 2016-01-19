@@ -75,14 +75,22 @@
     (testing "codec selection"
       (is (thrown? RuntimeException (codecs/mux-select mux :baz))
           "should throw exception when selecting missing codec")
-      (let [encoded (mc/encode (codecs/mux-select mux :bar) 'abc-123)]
-        (is (= [:bar "abc-123"] (mc/decode mux encoded))
-            "should force writing with selected codec")))
+      (binding [codecs/*dispatched-codec* nil]
+        (let [encoded (mc/encode (codecs/mux-select mux :bar) 'abc-123)]
+          (is (= [:bar "abc-123"] (mc/decode mux encoded))
+              "should force writing with selected codec")
+          (is (= :bar codecs/*dispatched-codec*)))))
     (testing "encoding roundtrip"
-      (let [encoded (mc/encode mux 1234)]
-        (is (= 10 (count encoded)) "should write the correct number of bytes")
-        (is (= "/foo" (mh/read-header! (ByteArrayInputStream. encoded))))
-        (is (= [:foo "1234"] (mc/decode mux encoded)))))
+      (binding [codecs/*dispatched-codec* nil]
+        (let [encoded (mc/encode mux 1234)]
+          (is (= :foo codecs/*dispatched-codec*)
+              "encoding should set dispatched-codec var")
+          (is (= 10 (count encoded)) "should write the correct number of bytes")
+          (is (= "/foo" (mh/read-header! (ByteArrayInputStream. encoded))))
+          (set! codecs/*dispatched-codec* nil)
+          (is (= [:foo "1234"] (mc/decode mux encoded)))
+          (is (= :foo codecs/*dispatched-codec*)
+              "decoding should set dispatched-codec var"))))
     (testing "no-matching decoder"
       (let [baos (ByteArrayOutputStream.)]
         (mh/write-header! baos "/baz/qux")
