@@ -52,7 +52,8 @@
   (encode!
     [codec ^java.io.OutputStream output value]
     "Write the value as a sequence of bytes to the output stream. Returns the
-    number of bytes written."))
+    number of bytes written. Throws an exception if the value cannot be
+    encoded."))
 
 
 (defn encode
@@ -72,7 +73,9 @@
 
   (decode!
     [codec ^java.io.InputStream input]
-    "Reads bytes from the input stream and returns the read value."))
+    "Reads bytes from the input stream and returns the read value. May not fully
+    consume the stream if multiple items are present. Throws an exception if the
+    input is malformed or incomplete."))
 
 
 (defn decode
