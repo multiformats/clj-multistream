@@ -49,6 +49,8 @@
   "An encoder converts values to binary sequences and writes the results to an
   output stream."
 
+  ; TODO: (encodable? codec value)
+
   (encode!
     [codec ^java.io.OutputStream output value]
     "Write the value as a sequence of bytes to the output stream. Returns the
@@ -70,6 +72,8 @@
 
 (defprotocol Decoder
   "A decoder reads binary sequences and interpretes them as Clojure values."
+
+  ; TODO: (decodable? codec header)
 
   (decode!
     [codec ^java.io.InputStream input]
