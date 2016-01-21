@@ -6,11 +6,48 @@
   - `select-encoder` takes the collection of codecs and the value to be encoded
     and returns a key identifying the codec to write the value with.
   - `select-decoder` takes the collection of codecs and the header path and
-    returns a key identifying the codec to read the value with."
+    returns a key identifying the codec to read the value with.
+
+  By default, the selection functions will look for codecs which can encode and
+  decode the values and headers passed to the mux codec."
   (:require
     [multicodec.core :as codec]
     [multicodec.header :as header]
     [multicodec.codecs.wrap :as wrap]))
+
+
+(defn find-encodable
+  "Finds a codec in the map which can encode the given value. Returns the key
+  for the codec, or nil if none are found."
+  [codecs value]
+  (ffirst (filter #(codec/encodable? (val %) value) codecs)))
+
+
+(defn find-decodable
+  "Finds a codec in the map which can decode the given header. Returns the key
+  for the codec, or nil if none are found."
+  [codecs header]
+  (ffirst (filter #(codec/decodable? (val %) header) codecs)))
+
+
+(defn- resolve-codec!
+  "Returns the selected codec, if it exists. Otherwise, throws an exception."
+  [codecs selected value]
+  (when-not selected
+    (throw (ex-info
+             (str "No codec selected for: " (pr-str value))
+             {:codecs (keys codecs)
+              :value value})))
+  (when-not (get codecs selected)
+    (throw (ex-info
+             (str "Selected codec " selected " which is not present in"
+                  " the codec map " (pr-str (seq (keys codecs)))
+                  " for: " (pr-str value))
+             {:codecs (keys codecs)
+              :selected selected
+              :value value})))
+  (get codecs selected))
+
 
 
 ;; ## Multiplexing Codec
@@ -25,23 +62,16 @@
 
   codec/Encoder
 
+  (encodable?
+    [this value]
+    (boolean (when-let [codec (get codecs (select-encoder codecs value))]
+               (codec/encodable? codec value))))
+
+
   (encode!
     [this output value]
     (let [codec-key (select-encoder codecs value)
-          codec (get codecs codec-key)]
-      (when-not codec-key
-        (throw (ex-info
-                 (str "No encoder selected for value: " (pr-str value))
-                 {:codec-keys (keys codecs)
-                  :value value})))
-      (when-not codec
-        (throw (ex-info
-                 (str "Selected encoder " codec-key " which is not present in"
-                      " the codec map " (pr-str (seq (keys codecs)))
-                      " for value: " (pr-str value))
-                 {:codec-keys (keys codecs)
-                  :encoder codec-key
-                  :value value})))
+          codec (resolve-codec! codecs codec-key value)]
       (when (bound? #'*dispatched-codec*)
         (set! *dispatched-codec* codec-key))
       (wrap/write-header-encoded! codec output (:header codec) value)))
@@ -49,24 +79,17 @@
 
   codec/Decoder
 
+  (decodable?
+    [this header']
+    (boolean (when-let [codec (get codecs (select-decoder codecs header))]
+               (codec/decodable? codec header))))
+
+
   (decode!
     [this input]
     (let [header (header/read-header! input)
           codec-key (select-decoder codecs header)
-          codec (get codecs codec-key)]
-      (when-not codec-key
-        (throw (ex-info
-                 (str "No decoder selected for header: " (pr-str header))
-                 {:codec-keys (keys codecs)
-                  :header header})))
-      (when-not codec
-        (throw (ex-info
-                 (str "Selected decoder " codec-key " which is not present in"
-                      " the codec map " (pr-str (seq (keys codecs)))
-                      " for header: " (pr-str header))
-                 {:codec-keys (keys codecs)
-                  :decoder codec-key
-                  :header header})))
+          codec (resolve-codec! codecs codec-key header)]
       (when (bound? #'*dispatched-codec*)
         (set! *dispatched-codec* codec-key))
       (codec/decode! codec input))))
@@ -83,14 +106,6 @@
                          (pr-str codec-key) " " (pr-str (keys (:codecs mux))))
                     {:codec-keys (keys (:codecs mux))
                      :key codec-key}))))
-
-
-(defn- match-header
-  "Helper function for selecting a decoder. Returns the key for the first entry
-  whose codec header matches the one given."
-  [codecs header]
-  (some #(when (= header (:header (val %))) (key %))
-        codecs))
 
 
 (defn mux-codec
@@ -122,8 +137,8 @@
     (MuxCodec.
       "/multicodec"
       codec-map
-      (constantly (first codecs))
-      match-header)))
+      find-encodable
+      find-decodable)))
 
 
 ;; Remove automatic constructor functions.
