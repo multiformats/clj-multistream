@@ -20,6 +20,11 @@
 
   codec/Encoder
 
+  (encodable?
+    [this value]
+    (string? value))
+
+
   (encode!
     [this output value]
     (let [writer (OutputStreamWriter. ^OutputStream output charset)
@@ -30,6 +35,11 @@
 
 
   codec/Decoder
+
+  (decodable?
+    [this header']
+    (= header header'))
+
 
   (decode!
     [this input]
