@@ -49,7 +49,9 @@
   "An encoder converts values to binary sequences and writes the results to an
   output stream."
 
-  ; TODO: (encodable? codec value)
+  (encodable?
+    [codec value]
+    "Returns true if the value type can be encoded by this codec.")
 
   (encode!
     [codec ^java.io.OutputStream output value]
@@ -73,7 +75,9 @@
 (defprotocol Decoder
   "A decoder reads binary sequences and interpretes them as Clojure values."
 
-  ; TODO: (decodable? codec header)
+  (decodable?
+    [codec header]
+    "Returns true if the codec supports decoding of the given header.")
 
   (decode!
     [codec ^java.io.InputStream input]
