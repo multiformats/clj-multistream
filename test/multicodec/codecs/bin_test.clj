@@ -9,6 +9,7 @@
   (let [bin (bin/bin-codec)
         content (byte-array 10)]
     (.nextBytes (java.security.SecureRandom.) content)
+    (is (bin/binary? content))
     (let [encoded (codec/encode bin content)]
       (testing "encoding"
         (is (= (count encoded) (count content))
