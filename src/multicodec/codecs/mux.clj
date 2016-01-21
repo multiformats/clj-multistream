@@ -44,7 +44,7 @@
                   :value value})))
       (when (bound? #'*dispatched-codec*)
         (set! *dispatched-codec* codec-key))
-      (wrap/write-header-encoded! codec output header value)))
+      (wrap/write-header-encoded! codec output (:header codec) value)))
 
 
   codec/Decoder
