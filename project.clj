@@ -12,6 +12,12 @@
   :dependencies
   [[org.clojure/clojure "1.7.0"]]
 
+  :hiera
+  {:vertical false
+   :cluster-depth 2
+   :ignore-ns #{clojure}
+   :show-external false}
+
   :codox
   {:metadata {:doc/format :markdown}
    :source-uri "https://github.com/greglook/clj-multicodec/blob/develop/{filepath}#L{line}"
