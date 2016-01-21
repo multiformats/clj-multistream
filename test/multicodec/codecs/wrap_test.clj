@@ -3,7 +3,7 @@
     [clojure.test :refer :all]
     [multicodec.core :as codec]
     [multicodec.header :as header]
-    [multicodec.codecs.test-utils :refer [mock-codec]]
+    [multicodec.test-utils :refer [mock-codec]]
     [multicodec.codecs.wrap :as wrap])
   (:import
     (java.io

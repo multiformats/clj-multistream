@@ -1,4 +1,4 @@
-(ns multicodec.codecs.test-utils
+(ns multicodec.test-utils
   (:require
     [multicodec.core :as codec]))
 

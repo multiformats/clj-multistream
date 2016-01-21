@@ -2,8 +2,8 @@
   (:require
     [clojure.test :refer :all]
     [multicodec.core :as codec]
-    [multicodec.codecs.filter :as filter]
-    [multicodec.codecs.test-utils :refer [mock-codec]]))
+    [multicodec.test-utils :refer [mock-codec]]
+    [multicodec.codecs.filter :as filter]))
 
 
 (deftest filter-codec

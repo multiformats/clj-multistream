@@ -3,8 +3,8 @@
     [clojure.test :refer :all]
     [multicodec.core :as codec]
     [multicodec.header :as header]
-    [multicodec.codecs.mux :as mux]
-    [multicodec.codecs.test-utils :refer [mock-codec]])
+    [multicodec.test-utils :refer [mock-codec]]
+    [multicodec.codecs.mux :as mux])
   (:import
     (java.io
       ByteArrayInputStream
