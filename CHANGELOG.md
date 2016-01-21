@@ -8,9 +8,14 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 ## [Unreleased]
 
 ### Added
-- Add `codecs/mux-select` convenience function.
-- Add `codecs/*dispatched-codec*`, which can be bound to discover the key for
+- Add `mux/select` convenience function.
+- Add `mux/*dispatched-codec*`, which can be bound to discover the key for
   the codec that `mux-codec` actually used on the input.
+- Add `multicodec.codecs.filter` codec to apply arbitrary transformation
+  functions on values as they are processed.
+
+### Changed
+- Moved codecs into separate namespaces under `multicodec.codecs`.
 
 ## [0.4.0] - 2015-11-24
 
