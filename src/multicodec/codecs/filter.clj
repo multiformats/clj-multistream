@@ -35,11 +35,12 @@
 (defn filter-codec
   "Creates a new filter codec, wrapping the given subcodec. Opts may include:
 
+  - `:header` string which overrides inheriting the subcodec's header
   - `:encoding` function which will transform values before they are encoded
   - `:decoding` function which will transform values after they are decoded"
   [subcodec & {:as opts}]
   (FilterCodec.
-    (:header subcodec)
+    (:header opts (:header subcodec))
     subcodec
     (:encoding opts)
     (:decoding opts)))
