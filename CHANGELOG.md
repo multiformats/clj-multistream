@@ -7,7 +7,13 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+This version includes a breaking change which splits `multicodec.codecs` into
+multiple smaller namespaces. This also adds the _codec predicates_ `encodable?`
+and `decodable?`, to determine whether a given codec supports encoding a value
+or decoding a header, respectively.
+
 ### Added
+- Add `bin/BinaryData` protocol to make bin-codec more extensible.
 - Add `mux/select` convenience function.
 - Add `mux/*dispatched-codec*`, which can be bound to discover the key for
   the codec that `mux-codec` actually used on the input.
