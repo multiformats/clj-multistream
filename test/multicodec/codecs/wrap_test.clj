@@ -3,7 +3,7 @@
     [clojure.test :refer :all]
     [multicodec.core :as codec]
     [multicodec.header :as header]
-    [multicodec.codecs.test-utils :refer [mock-codec]]
+    [multicodec.test-utils :refer [mock-codec]]
     [multicodec.codecs.wrap :as wrap])
   (:import
     (java.io
@@ -20,6 +20,11 @@
       (let [wrapped (wrap/wrap-header foo "/bar")]
         (is (= "/bar" (:header wrapped))
             "header should be settable with second arg")))
+    (testing "predicates"
+      (is (codec/encodable? wrapped nil)
+          "predicate should pass through")
+      (is (codec/decodable? wrapped (:header foo))
+          "wrapped codec header should be decodable"))
     (testing "encoding roundtrip"
       (let [encoded (codec/encode wrapped 1234)]
         (is (= "/foo" (header/read-header! (ByteArrayInputStream. encoded)))

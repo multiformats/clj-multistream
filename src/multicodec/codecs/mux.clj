@@ -1,46 +1,57 @@
 (ns multicodec.codecs.mux
-  "Multiplexing codec which uses a set of iternal functions to decide which
-  codec to use when encoding or decoding data.
+  "Multiplexing codec which uses the codec predicates `encodable?` and
+  `decodable?` to decide which codec to use when encoding or decoding data.
 
-  - `codecs` is a map from keys to codecs.
-  - `select-encoder` takes the collection of codecs and the value to be encoded
-    and returns a key identifying the codec to write the value with.
-  - `select-decoder` takes the collection of codecs and the header path and
-    returns a key identifying the codec to read the value with."
+  `codecs` should be a map from (arbitrary) keys to codecs with headers and
+  support for the codec predicates.
+
+  The actual codec delegated to can be determined by binding
+  `*dispatched-codec*` to `nil` and checking the result after an operation."
   (:require
     [multicodec.core :as codec]
     [multicodec.header :as header]
     [multicodec.codecs.wrap :as wrap]))
 
 
-;; ## Multiplexing Codec
-
 ;; This var can be bound to find out what codec the mux used internally when
 ;; encoding or decoding a value.
 (def ^:dynamic *dispatched-codec*)
 
 
+(defn- find-encodable
+  "Finds the first codec in the map which can encode the given value. Returns a
+  vector of the key and codec entry, or nil if none are found."
+  [codecs value]
+  (first (filter #(codec/encodable? (val %) value) codecs)))
+
+
+(defn- find-decodable
+  "Finds the first codec in the map which can decode the given header. Returns
+  a vector of the key and codec entry, or nil if none are found."
+  [codecs header]
+  (first (filter #(codec/decodable? (val %) header) codecs)))
+
+
+
+;; ## Multiplexing Codec
+
 (defrecord MuxCodec
-  [header codecs select-encoder select-decoder]
+  [header codecs]
 
   codec/Encoder
 
+  (encodable?
+    [this value]
+    (boolean (find-encodable codecs value)))
+
+
   (encode!
     [this output value]
-    (let [codec-key (select-encoder codecs value)
-          codec (get codecs codec-key)]
-      (when-not codec-key
-        (throw (ex-info
-                 (str "No encoder selected for value: " (pr-str value))
-                 {:codec-keys (keys codecs)
-                  :value value})))
+    (let [[codec-key codec] (find-encodable codecs value)]
       (when-not codec
         (throw (ex-info
-                 (str "Selected encoder " codec-key " which is not present in"
-                      " the codec map " (pr-str (seq (keys codecs)))
-                      " for value: " (pr-str value))
-                 {:codec-keys (keys codecs)
-                  :encoder codec-key
+                 (str "No codecs can encode value: " (pr-str value))
+                 {:codecs (keys codecs)
                   :value value})))
       (when (bound? #'*dispatched-codec*)
         (set! *dispatched-codec* codec-key))
@@ -49,24 +60,20 @@
 
   codec/Decoder
 
+  (decodable?
+    [this header']
+    (boolean (find-decodable codecs header')))
+
+
   (decode!
     [this input]
-    (let [header (header/read-header! input)
-          codec-key (select-decoder codecs header)
-          codec (get codecs codec-key)]
-      (when-not codec-key
-        (throw (ex-info
-                 (str "No decoder selected for header: " (pr-str header))
-                 {:codec-keys (keys codecs)
-                  :header header})))
+    (let [header' (header/read-header! input)
+          [codec-key codec] (find-decodable codecs header')]
       (when-not codec
         (throw (ex-info
-                 (str "Selected decoder " codec-key " which is not present in"
-                      " the codec map " (pr-str (seq (keys codecs)))
-                      " for header: " (pr-str header))
-                 {:codec-keys (keys codecs)
-                  :decoder codec-key
-                  :header header})))
+                 (str "No codecs can decode header: " (pr-str header'))
+                 {:codecs (keys codecs)
+                  :header header'})))
       (when (bound? #'*dispatched-codec*)
         (set! *dispatched-codec* codec-key))
       (codec/decode! codec input))))
@@ -81,31 +88,24 @@
     (wrap/wrap-header codec)
     (throw (ex-info (str "Multiplexer does not contain codec for key "
                          (pr-str codec-key) " " (pr-str (keys (:codecs mux))))
-                    {:codec-keys (keys (:codecs mux))
+                    {:codecs (keys (:codecs mux))
                      :key codec-key}))))
-
-
-(defn- match-header
-  "Helper function for selecting a decoder. Returns the key for the first entry
-  whose codec header matches the one given."
-  [codecs header]
-  (some #(when (= header (:header (val %))) (key %))
-        codecs))
 
 
 (defn mux-codec
   "Creates a new multiplexing codec which delegates to the given collection of
-  codecs by reading and writing multicodec headers when coding.
+  codecs by reading and writing multicodec headers when serializing values.
 
-  By default, the first codec given is used for all encoding. The codec's
-  `:header` is written first, then the codec is used to write the value.
+  When encoding a value, the multiplexer will look for the first codec which
+  reports it is `encodable?`. The selected codec's header is written first,
+  then the codec is used to write the value.
 
-  When decoding, the multiplexer tries to read a multicodec header and looks up
-  the corresponding codec in the `codecs` map. The codec is used to read a
-  value from the remaining data.
+  When decoding, the multiplexer tries to read a multicodec header and looks
+  for the first codec which reports the header is `decodable?`. The selected
+  codec is then used to read a value from the remaining data.
 
-  As a consequence, the delegated codecs _must not_ write or expect to consume
-  their own headers!"
+  As a consequence, the delegated codecs _must_ implement the codec predicates
+  and _must not_ write or expect to consume their own headers!"
   [& codecs]
   (when-not (seq codecs)
     (throw (IllegalArgumentException.
@@ -119,11 +119,7 @@
       (throw (IllegalArgumentException.
                (str "Every codec must specify a header path: "
                     (pr-str bad-codecs)))))
-    (MuxCodec.
-      "/multicodec"
-      codec-map
-      (constantly (first codecs))
-      match-header)))
+    (MuxCodec. "/multicodec" codec-map)))
 
 
 ;; Remove automatic constructor functions.

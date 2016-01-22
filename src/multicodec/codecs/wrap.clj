@@ -22,12 +22,22 @@
 
   codec/Encoder
 
+  (encodable?
+    [this value]
+    (codec/encodable? codec value))
+
+
   (encode!
     [this output value]
     (write-header-encoded! codec output header value))
 
 
   codec/Decoder
+
+  (decodable?
+    [this header']
+    (codec/decodable? codec header'))
+
 
   (decode!
     [this input]

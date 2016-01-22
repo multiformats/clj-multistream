@@ -9,7 +9,15 @@
   (let [bin (bin/bin-codec)
         content (byte-array 10)]
     (.nextBytes (java.security.SecureRandom.) content)
-    (is (bin/binary? content))
+    (testing "predicates"
+      (is (codec/encodable? bin content)
+          "byte array should be encodable")
+      (is (not (codec/encodable? bin "foo"))
+          "string should not be encodable")
+      (is (codec/decodable? bin (:header bin))
+          "bin header should be decodable")
+      (is (not (codec/decodable? bin "/text"))
+          "text header should not be decodable"))
     (let [encoded (codec/encode bin content)]
       (testing "encoding"
         (is (= (count encoded) (count content))
