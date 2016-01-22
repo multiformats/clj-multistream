@@ -13,6 +13,11 @@
     [multicodec.codecs.wrap :as wrap]))
 
 
+;; This var can be bound to find out what codec the mux used internally when
+;; encoding or decoding a value.
+(def ^:dynamic *dispatched-codec*)
+
+
 (defn- find-encodable
   "Finds the first codec in the map which can encode the given value. Returns a
   vector of the key and codec entry, or nil if none are found."
@@ -29,11 +34,6 @@
 
 
 ;; ## Multiplexing Codec
-
-;; This var can be bound to find out what codec the mux used internally when
-;; encoding or decoding a value.
-(def ^:dynamic *dispatched-codec*)
-
 
 (defrecord MuxCodec
   [header codecs]
@@ -53,8 +53,7 @@
                  (str "No codecs can encode value: " (pr-str value))
                  {:codecs (keys codecs)
                   :value value})))
-      (when (and (bound? #'*dispatched-codec*)
-                 (nil? *dispatched-codec*))
+      (when (bound? #'*dispatched-codec*)
         (set! *dispatched-codec* codec-key))
       (wrap/write-header-encoded! codec output (:header codec) value)))
 
@@ -75,8 +74,7 @@
                  (str "No codecs can decode header: " (pr-str header'))
                  {:codecs (keys codecs)
                   :header header'})))
-      (when (and (bound? #'*dispatched-codec*)
-                 (nil? *dispatched-codec*))
+      (when (bound? #'*dispatched-codec*)
         (set! *dispatched-codec* codec-key))
       (codec/decode! codec input))))
 
