@@ -10,6 +10,15 @@
         content "the quick brown fox jumped over the lazy dog"]
     (is (= "/text/UTF-8" (:header text))
         "constructor should default to UTF-8")
+    (testing "predicates"
+      (is (codec/encodable? text content)
+          "string should be encodable")
+      (is (not (codec/encodable? text :foo))
+          "keyword should not be decodable")
+      (is (codec/decodable? text (:header text))
+          "text header should be decodable")
+      (is (not (codec/decodable? text "/edn"))
+          "edn header should not be decodable"))
     (let [encoded (codec/encode text content)]
       (testing "encoding"
         (is (= (count encoded) (count content))

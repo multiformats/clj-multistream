@@ -9,6 +9,11 @@
 (deftest filter-codec
   (testing "without coding filters"
     (let [fltr (filter/filter-codec (mock-codec :foo "/foo"))]
+      (testing "predicates"
+        (is (codec/encodable? fltr :foo)
+            "should pass encodable check to wrapped codec")
+        (is (codec/decodable? fltr "/foo")
+            "should pass decodable check to wrapped codec"))
       (testing "encoding roundtrip"
         (let [encoded (codec/encode fltr 1234)]
           (is (= 4 (count encoded)) "should write the correct number of bytes")
@@ -18,6 +23,11 @@
     (let [fltr (filter/filter-codec (mock-codec :foo "/foo")
                                     :encoding #(vector :encoded %)
                                     :decoding #(vector :decoded %))]
+      (testing "predicates"
+        (is (codec/encodable? fltr :foo)
+            "should pass encodable check to wrapped codec")
+        (is (codec/decodable? fltr "/foo")
+            "should pass decodable check to wrapped codec"))
       (testing "encoding roundtrip"
         (let [encoded (codec/encode fltr 1234)]
           (is (= 15 (count encoded)) "should write the correct number of bytes")

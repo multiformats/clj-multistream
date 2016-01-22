@@ -20,6 +20,11 @@
       (let [wrapped (wrap/wrap-header foo "/bar")]
         (is (= "/bar" (:header wrapped))
             "header should be settable with second arg")))
+    (testing "predicates"
+      (is (codec/encodable? wrapped nil)
+          "predicate should pass through")
+      (is (codec/decodable? wrapped (:header foo))
+          "wrapped codec header should be decodable"))
     (testing "encoding roundtrip"
       (let [encoded (codec/encode wrapped 1234)]
         (is (= "/foo" (header/read-header! (ByteArrayInputStream. encoded)))
