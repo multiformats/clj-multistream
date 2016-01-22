@@ -49,10 +49,15 @@
   "An encoder converts values to binary sequences and writes the results to an
   output stream."
 
+  (encodable?
+    [codec value]
+    "Returns true if the value type can be encoded by this codec.")
+
   (encode!
     [codec ^java.io.OutputStream output value]
     "Write the value as a sequence of bytes to the output stream. Returns the
-    number of bytes written."))
+    number of bytes written. Throws an exception if the value cannot be
+    encoded."))
 
 
 (defn encode
@@ -70,9 +75,15 @@
 (defprotocol Decoder
   "A decoder reads binary sequences and interpretes them as Clojure values."
 
+  (decodable?
+    [codec header]
+    "Returns true if the codec supports decoding of the given header.")
+
   (decode!
     [codec ^java.io.InputStream input]
-    "Reads bytes from the input stream and returns the read value."))
+    "Reads bytes from the input stream and returns the read value. May not fully
+    consume the stream if multiple items are present. Throws an exception if the
+    input is malformed or incomplete."))
 
 
 (defn decode

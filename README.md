@@ -30,16 +30,23 @@ There are a few simple codecs included as utilities, for example the text codec:
 
 ```clojure
 => (require '[multicodec.core :as codec]
-            '[multicodec.codecs :as codecs])
+            '[multicodec.codecs.text :refer [text-codec])
 
 ; The text codec converts between characters and bytes using a charset:
-=> (def text (codecs/text-codec))
+=> (def text (text-codec))
 
 ; The default is UTF-8, and sets the codec's header:
 => text
-#multicodec.codecs.TextCodec
+#multicodec.codecs.text.TextCodec
 {:charset #<sun.nio.cs.UTF_8@11207688 UTF-8>,
  :header "/text/UTF-8"}
+
+; We can test what sort of values a codec can handle:
+=> (codec/encodable? text "foo")
+true
+
+=> (codec/encodable? text :bar)
+false
 
 ; Text encoding turns strings into bytes:
 => (def encoded (codec/encode text "abc 123!"))
@@ -53,18 +60,34 @@ There are a few simple codecs included as utilities, for example the text codec:
 ; Decoding reads bytes into a string:
 => (codec/decode text encoded)
 "abc 123!"
+
+; Text codec can read data encoded with its own header:
+=> (codec/decodable? text "/text/UTF-8")
+true
+
+; It doesn't understand other headers, though:
+=> (codec/decodable? text "/bin")
+false
 ```
 
 More sophisticated usage involves reading and writing headers to determine what
 the content is:
 
 ```clojure
-; Multiplexing codecs choose among multiple children:
-=> (def mux (codecs/mux-codec
-              :text (codecs/text-codec)
-              :bin  (codecs/bin-codec)))
+=> (require '[multicodec.codecs.mux :as mux]
+            '[multicodec.codecs.bin :as bin])
 
-; By default, the first codec is used for encoding:
+; Multiplexing codecs choose among multiple children:
+=> (def mux (mux/mux-codec
+              :text (text/text-codec)
+              :bin  (bin/bin-codec)))
+
+; Mux codec can handle both strings and binary data:
+=> (and (codec/encodable? mux "foo")
+        (codec/encodable? mux (byte-array 10)))
+true
+
+; The first codec which can encode the value is used:
 => (def encoded (codec/encode mux "abc 123!"))
 
 ; The initial 12 is the length of the codec header:
@@ -79,10 +102,13 @@ the content is:
 => (codec/decode mux encoded)
 "abc 123!"
 
-; Lets create a binary-encoded value - wrap-headers will prefix the header to
-; the encoded output:
-=> (def encoded (codec/encode (codecs/wrap-headers (codecs/bin-codec))
-                              (.getBytes "foo")))
+; Mux codec can decode both text and binary data:
+=> (and (codec/decodable? mux "/text/UTF-8")
+        (codec/decodable? mux "/bin"))
+true
+
+; Lets create a binary-encoded value by selecting the bin codec:
+=> (def encoded (codec/encode (mux/select mux :bin) (.getBytes "foo")))
 
 => (seq encoded)
 (6 47 98 105 110 47 10 102 111 111)
