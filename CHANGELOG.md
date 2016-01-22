@@ -7,6 +7,10 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+...
+
+## [0.5.0] - 2016-01-22
+
 This version includes a breaking change which splits `multicodec.codecs` into
 multiple smaller namespaces. This also adds the _codec predicates_ `encodable?`
 and `decodable?`, to determine whether a given codec supports encoding a value
@@ -54,7 +58,8 @@ or decoding a header, respectively.
 
 Initial project release
 
-[Unreleased]: https://github.com/greglook/clj-multicodec/compare/0.4.0...HEAD
+[Unreleased]: https://github.com/greglook/clj-multicodec/compare/0.5.0...HEAD
+[0.5.0]: https://github.com/greglook/clj-multicodec/compare/0.4.0...0.5.0
 [0.4.0]: https://github.com/greglook/clj-multicodec/compare/0.3.0...0.4.0
 [0.3.0]: https://github.com/greglook/clj-multicodec/compare/0.2.0...0.3.0
 [0.2.0]: https://github.com/greglook/clj-multicodec/compare/0.1.0...0.2.0
