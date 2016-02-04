@@ -15,6 +15,14 @@
     java.nio.charset.Charset))
 
 
+(def ^:dynamic *headers*
+  "This var can be bound in a thread to discover what headers were actually
+  read or written during some codec operations. Each time a header is
+  successfully read or written, it will be `conj`ed into the collection in this
+  var."
+  nil)
+
+
 (def ^:no-doc ^:const max-header-length
   "The maximum length (in bytes) a header path can be."
   127)
@@ -64,6 +72,8 @@
   [^OutputStream output path]
   (let [header (encode-header path)]
     (.write output header)
+    (when (thread-bound? #'*headers*)
+      (set! *headers* (conj *headers* path)))
     (count header)))
 
 
@@ -104,4 +114,7 @@
                       (pr-str (.charAt header (dec (count header)))))
                  :header header
                  :length length)))
-      (str/trim-newline header))))
+      (let [path (str/trim-newline header)]
+        (when (thread-bound? #'*headers*)
+          (set! *headers* (conj *headers* path)))
+        path))))
