@@ -2865,9 +2865,11 @@ net.brehaut.ClojureTools = (function (SH) {
     build_tree: build_tree
   };
 })(SyntaxHighlighter);
-</script><title>mvxcvi/multicodec -- Marginalia</title></head><body><table><tr><td class="docs"><div class="header"><h1 class="project-name"><a href="https://github.com/greglook/clj-multicodec">mvxcvi/multicodec</a></h1><h2 class="project-version">0.5.0</h2><br /><p>Clojure implementation of the multicodec standard.</p>
+</script><title>mvxcvi/multicodec -- Marginalia</title></head><body><table><tr><td class="docs"><div class="header"><h1 class="project-name"><a href="https://github.com/greglook/clj-multicodec">mvxcvi/multicodec</a></h1><h2 class="project-version">0.5.1</h2><br /><p>Clojure implementation of the multicodec standard.</p>
 </div><div class="dependencies"><h3>dependencies</h3><table><tr><td class="dep-name">org.clojure/clojure</td><td class="dotted"><hr /></td><td class="dep-version">1.7.0</td></tr></table></div></td><td class="codes" style="text-align: center; vertical-align: middle;color: #666;padding-right:20px"><br /><br /><br />(this space intentionally left almost blank)</td></tr><tr><td class="docs"><div class="toc"><a name="toc"><h3>namespaces</h3></a><ul><li><a href="#multicodec.core">multicodec.core</a></li><li><a href="#multicodec.header">multicodec.header</a></li><li><a href="#multicodec.codecs.text">multicodec.codecs.text</a></li><li><a href="#multicodec.codecs.bin">multicodec.codecs.bin</a></li><li><a href="#multicodec.codecs.wrap">multicodec.codecs.wrap</a></li><li><a href="#multicodec.codecs.filter">multicodec.codecs.filter</a></li><li><a href="#multicodec.codecs.mux">multicodec.codecs.mux</a></li></ul></div></td><td class="codes">&nbsp;</td></tr><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#multicodec.core" name="multicodec.core"><h1 class="project-name">multicodec.core</h1><a class="toc-link" href="#toc">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs"><p>Core multicodec protocols and functions.</p>
 </td><td class="codes"><pre class="brush: clojure">(ns multicodec.core
+  (:require
+    [multicodec.header :as header])
   (:import
     (java.io
       ByteArrayInputStream
@@ -2915,7 +2917,17 @@ net.brehaut.ClojureTools = (function (SH) {
   [codec value]
   (let [baos (ByteArrayOutputStream.)]
     (encode! codec baos value)
-    (.toByteArray baos)))</pre></td></tr><tr><td class="docs"><h2>Decoding</h2>
+    (.toByteArray baos)))</pre></td></tr><tr><td class="docs"><p>Writes a header to the output stream, then writes out the encoded value.
+  Returns the number of bytes written.</p>
+
+<p>  If a header is not given, the codec's header is used.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn encode-with-header!
+  ([codec output value]
+   (encode-with-header! codec output (:header codec) value))
+  ([codec output header value]
+   (let [header-length (header/write-header! output header)
+         body-length (encode! codec output value)]
+     (+ header-length body-length))))</pre></td></tr><tr><td class="docs"><h2>Decoding</h2>
 </td><td class="codes"></td></tr><tr><td class="docs"><p>A decoder reads binary sequences and interpretes them as Clojure values.</p>
 </td><td class="codes"><pre class="brush: clojure">(defprotocol Decoder
   (decodable?
@@ -2929,7 +2941,22 @@ net.brehaut.ClojureTools = (function (SH) {
 </td><td class="codes"><pre class="brush: clojure">(defn decode
   [codec ^bytes byte-data]
   (let [bais (ByteArrayInputStream. byte-data)]
-    (decode! codec bais)))</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#multicodec.header" name="multicodec.header"><h1 class="project-name">multicodec.header</h1><a class="toc-link" href="#toc">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs"><p>Functions for handling multicodec header paths.</p>
+    (decode! codec bais)))</pre></td></tr><tr><td class="docs"><p>Reads a multicodec header from the input stream and checks it against the one
+  provided. Throws an exception if the header does not match, otherwise uses the
+  codec to read a value from the stream.</p>
+
+<p>  If a header is not given, the codec's header is used.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn decode-with-header!
+  ([codec input]
+   (decode-with-header! codec input (:header codec)))
+  ([codec input header]
+   (let [header' (header/read-header! input)]
+     (when-not (= header header')
+       (throw (ex-info
+                (format &quot;The stream header %s did not match expected header %s&quot;
+                        (pr-str header') (pr-str header))
+                {:expected header, :actual header'})))
+     (decode! codec input))))</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#multicodec.header" name="multicodec.header"><h1 class="project-name">multicodec.header</h1><a class="toc-link" href="#toc">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs"><p>Functions for handling multicodec header paths.</p>
 
 <p>  On error, these functions throw an <code>ExceptionInfo</code> with ex-data containing
   <code>:type :multicodec/bad-header</code> to indicate the problem. The data map will also
@@ -2943,7 +2970,12 @@ net.brehaut.ClojureTools = (function (SH) {
       ByteArrayOutputStream
       InputStream
       OutputStream)
-    java.nio.charset.Charset))</pre></td></tr><tr><td class="docs"><p>The maximum length (in bytes) a header path can be.</p>
+    java.nio.charset.Charset))</pre></td></tr><tr><td class="docs"><p>This var can be bound in a thread to discover what headers were actually
+  read or written during some codec operations. Each time a header is
+  successfully read or written, it will be <code>conj</code>ed into the collection in this
+  var.</p>
+</td><td class="codes"><pre class="brush: clojure">(def ^:dynamic *headers*
+  nil)</pre></td></tr><tr><td class="docs"><p>The maximum length (in bytes) a header path can be.</p>
 </td><td class="codes"><pre class="brush: clojure">(def ^:no-doc ^:const max-header-length
   127)</pre></td></tr><tr><td class="docs"><p>The character set that codec headers are encoded with.</p>
 </td><td class="codes"><pre class="brush: clojure">(def ^:no-doc ^java.nio.charset.Charset header-charset
@@ -2978,6 +3010,8 @@ net.brehaut.ClojureTools = (function (SH) {
   [^OutputStream output path]
   (let [header (encode-header path)]
     (.write output header)
+    (when (thread-bound? #'*headers*)
+      (set! *headers* (conj *headers* path)))
     (count header)))</pre></td></tr><tr><td class="docs"><h2>Header Decoding</h2>
 </td><td class="codes"></td></tr><tr><td class="docs"><p>Attempts to read <code>length</code> bytes from the given stream. Returns a byte array with
   the read bytes.</p>
@@ -3010,7 +3044,10 @@ net.brehaut.ClojureTools = (function (SH) {
                       (pr-str (.charAt header (dec (count header)))))
                  :header header
                  :length length)))
-      (str/trim-newline header))))</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#multicodec.codecs.text" name="multicodec.codecs.text"><h1 class="project-name">multicodec.codecs.text</h1><a class="toc-link" href="#toc">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs"><p>Text codec which uses UTF-8 to serialize strings.</p>
+      (let [path (str/trim-newline header)]
+        (when (thread-bound? #'*headers*)
+          (set! *headers* (conj *headers* path)))
+        path))))</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#multicodec.codecs.text" name="multicodec.codecs.text"><h1 class="project-name">multicodec.codecs.text</h1><a class="toc-link" href="#toc">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs"><p>Text codec which uses UTF-8 to serialize strings.</p>
 </td><td class="codes"><pre class="brush: clojure">(ns multicodec.codecs.text
   (:require
     [clojure.java.io :as io]
@@ -3100,18 +3137,13 @@ net.brehaut.ClojureTools = (function (SH) {
   []
   (BinaryCodec. (codec/headers :bin)))</pre></td></tr><tr><td class="docs"><p>Remove automatic constructor functions.</p>
 </td><td class="codes"><pre class="brush: clojure">(ns-unmap *ns* '-&gt;BinaryCodec)
-(ns-unmap *ns* 'map-&gt;BinaryCodec)</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#multicodec.codecs.wrap" name="multicodec.codecs.wrap"><h1 class="project-name">multicodec.codecs.wrap</h1><a class="toc-link" href="#toc">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs"><p>Wrapper codec which writes out and reads a header before the value body.</p>
+(ns-unmap *ns* 'map-&gt;BinaryCodec)</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#multicodec.codecs.wrap" name="multicodec.codecs.wrap"><h1 class="project-name">multicodec.codecs.wrap</h1><a class="toc-link" href="#toc">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs"><p>Wrapper codec which writes out and reads a header before the value body. This
+  is equivalent to calling the wrapped codec with the <code>encode-with-header!</code> and
+  <code>decode-with-header!</code> functions from the core ns.</p>
 </td><td class="codes"><pre class="brush: clojure">(ns multicodec.codecs.wrap
   (:require
     [multicodec.core :as codec]
-    [multicodec.header :as header]))</pre></td></tr><tr><td class="docs"><p>Convenience function to write a header for the given codec, then use it to
-  write out the encoded value.</p>
-</td><td class="codes"><pre class="brush: clojure">(defn ^:no-doc write-header-encoded!
-  [codec output header value]
-  (let [header-length (header/write-header! output header)
-        body-length (codec/encode! codec output value)]
-    (+ header-length body-length)))</pre></td></tr><tr><td class="docs"><h2>Wrapper Codec</h2>
-</td><td class="codes"></td></tr><tr><td class="docs">
+    [multicodec.header :as header]))</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(defrecord WrapperCodec
   [header codec]
   codec/Encoder
@@ -3120,20 +3152,14 @@ net.brehaut.ClojureTools = (function (SH) {
     (codec/encodable? codec value))
   (encode!
     [this output value]
-    (write-header-encoded! codec output header value))
+    (codec/encode-with-header! codec output header value))
   codec/Decoder
   (decodable?
     [this header']
     (codec/decodable? codec header'))
   (decode!
     [this input]
-    (let [header' (header/read-header! input)]
-      (when-not (= header header')
-        (throw (ex-info
-                 (format &quot;The stream header %s did not match expected header %s&quot;
-                         (pr-str header') (pr-str header))
-                 {:expected header, :actual header'})))
-      (codec/decode! codec input))))</pre></td></tr><tr><td class="docs"><p>Creates a new codec which will write the header for the wrapped codec before
+    (codec/decode-with-header! codec input header)))</pre></td></tr><tr><td class="docs"><p>Creates a new codec which will write the header for the wrapped codec before
   calling it. When decoding, it will read the header before calling the wrapped
   codec, and throw an exception if it does not match.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn wrap-header
@@ -3200,9 +3226,16 @@ net.brehaut.ClojureTools = (function (SH) {
   (:require
     [multicodec.core :as codec]
     [multicodec.header :as header]
-    [multicodec.codecs.wrap :as wrap]))</pre></td></tr><tr><td class="docs"><p>This var can be bound to find out what codec the mux used internally when
+    [multicodec.codecs.wrap :as wrap]))</pre></td></tr><tr><td class="docs"><p>This var can be bound to nil in a thread to discover what codec was
+         actually invoked by a mux codec operation. Encoding or decoding sets
+         the var to the selected subcodec's keyword.</p>
+
+<p>This var can be bound to find out what codec the mux used internally when
 encoding or decoding a value.</p>
-</td><td class="codes"><pre class="brush: clojure">(def ^:dynamic *dispatched-codec*)</pre></td></tr><tr><td class="docs"><p>Finds the first codec in the map which can encode the given value. Returns a
+</td><td class="codes"><pre class="brush: clojure">(def
+  ^{:dynamic true
+    :doc }
+  *dispatched-codec*)</pre></td></tr><tr><td class="docs"><p>Finds the first codec in the map which can encode the given value. Returns a
   vector of the key and codec entry, or nil if none are found.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn- find-encodable
   [codecs value]
@@ -3213,7 +3246,7 @@ encoding or decoding a value.</p>
   (first (filter #(codec/decodable? (val %) header) codecs)))</pre></td></tr><tr><td class="docs"><h2>Multiplexing Codec</h2>
 </td><td class="codes"></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(defrecord MuxCodec
-  [header codecs]
+  [codecs]
   codec/Encoder
   (encodable?
     [this value]
@@ -3226,23 +3259,23 @@ encoding or decoding a value.</p>
                  (str &quot;No codecs can encode value: &quot; (pr-str value))
                  {:codecs (keys codecs)
                   :value value})))
-      (when (bound? #'*dispatched-codec*)
+      (when (thread-bound? #'*dispatched-codec*)
         (set! *dispatched-codec* codec-key))
-      (wrap/write-header-encoded! codec output (:header codec) value)))
+      (codec/encode-with-header! codec output value)))
   codec/Decoder
   (decodable?
-    [this header']
-    (boolean (find-decodable codecs header')))
+    [this header]
+    (boolean (find-decodable codecs header)))
   (decode!
     [this input]
-    (let [header' (header/read-header! input)
-          [codec-key codec] (find-decodable codecs header')]
+    (let [header (header/read-header! input)
+          [codec-key codec] (find-decodable codecs header)]
       (when-not codec
         (throw (ex-info
-                 (str &quot;No codecs can decode header: &quot; (pr-str header'))
+                 (str &quot;No codecs can decode header: &quot; (pr-str header))
                  {:codecs (keys codecs)
-                  :header header'})))
-      (when (bound? #'*dispatched-codec*)
+                  :header header})))
+      (when (thread-bound? #'*dispatched-codec*)
         (set! *dispatched-codec* codec-key))
       (codec/decode! codec input))))</pre></td></tr><tr><td class="docs"><p>Convenience function for selecting a specific codec from a multiplexer. The
   returned codec will encode and decode as the mux would, but only for that
@@ -3281,7 +3314,7 @@ encoding or decoding a value.</p>
       (throw (IllegalArgumentException.
                (str &quot;Every codec must specify a header path: &quot;
                     (pr-str bad-codecs)))))
-    (MuxCodec. &quot;/multicodec&quot; codec-map)))</pre></td></tr><tr><td class="docs"><p>Remove automatic constructor functions.</p>
+    (MuxCodec. codec-map)))</pre></td></tr><tr><td class="docs"><p>Remove automatic constructor functions.</p>
 </td><td class="codes"><pre class="brush: clojure">(ns-unmap *ns* '-&gt;MuxCodec)
 (ns-unmap *ns* 'map-&gt;MuxCodec)</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr></table><div class="footer">Generated by <a href="https://github.com/gdeer81/marginalia">Marginalia</a>.&nbsp;&nbsp;Syntax highlighting provided by Alex Gorbatchev's <a href="http://alexgorbatchev.com/SyntaxHighlighter/">SyntaxHighlighter</a><div id="floating-toc"><ul><li class="floating-toc-li" id="floating-toc_multicodec.core">multicodec.core</li><li class="floating-toc-li" id="floating-toc_multicodec.header">multicodec.header</li><li class="floating-toc-li" id="floating-toc_multicodec.codecs.text">multicodec.codecs.text</li><li class="floating-toc-li" id="floating-toc_multicodec.codecs.bin">multicodec.codecs.bin</li><li class="floating-toc-li" id="floating-toc_multicodec.codecs.wrap">multicodec.codecs.wrap</li><li class="floating-toc-li" id="floating-toc_multicodec.codecs.filter">multicodec.codecs.filter</li><li class="floating-toc-li" id="floating-toc_multicodec.codecs.mux">multicodec.codecs.mux</li></ul></div></div><script type="text/javascript">SyntaxHighlighter.defaults['gutter'] = false;
 SyntaxHighlighter.all();
