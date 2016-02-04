@@ -15,7 +15,12 @@
 
 ;; This var can be bound to find out what codec the mux used internally when
 ;; encoding or decoding a value.
-(def ^:dynamic *dispatched-codec*)
+(def
+  ^{:dynamic true
+    :doc "This var can be bound to nil in a thread to discover what codec was
+         actually invoked by a mux codec operation. Encoding or decoding sets
+         the var to the selected subcodec's keyword."}
+  *dispatched-codec*)
 
 
 (defn- find-encodable
