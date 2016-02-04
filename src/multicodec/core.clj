@@ -1,5 +1,7 @@
 (ns multicodec.core
   "Core multicodec protocols and functions."
+  (:require
+    [multicodec.header :as header])
   (:import
     (java.io
       ByteArrayInputStream
@@ -69,6 +71,19 @@
     (.toByteArray baos)))
 
 
+(defn encode-with-header!
+  "Writes a header to the output stream, then writes out the encoded value.
+  Returns the number of bytes written.
+
+  If a header is not given, the codec's header is used."
+  ([codec output value]
+   (encode-with-header! codec output (:header codec) value))
+  ([codec output header value]
+   (let [header-length (header/write-header! output header)
+         body-length (encode! codec output value)]
+     (+ header-length body-length))))
+
+
 
 ;; ## Decoding
 
@@ -91,3 +106,21 @@
   [codec ^bytes byte-data]
   (let [bais (ByteArrayInputStream. byte-data)]
     (decode! codec bais)))
+
+
+(defn decode-with-header!
+  "Reads a multicodec header from the input stream and checks it against the one
+  provided. Throws an exception if the header does not match, otherwise uses the
+  codec to read a value from the stream.
+
+  If a header is not given, the codec's header is used."
+  ([codec input]
+   (decode-with-header! codec input (:header codec)))
+  ([codec input header]
+   (let [header' (header/read-header! input)]
+     (when-not (= header header')
+       (throw (ex-info
+                (format "The stream header %s did not match expected header %s"
+                        (pr-str header') (pr-str header))
+                {:expected header, :actual header'})))
+     (decode! codec input))))

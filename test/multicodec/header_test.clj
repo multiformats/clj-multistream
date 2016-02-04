@@ -103,3 +103,20 @@
 
 (deftest stream-roundtrips
   (test-stream-roundtrip "/b16" "0123456789abcdef"))
+
+
+(deftest header-collecting-var
+  (let [baos (ByteArrayOutputStream.)]
+    (testing "writing headers"
+      (binding [mh/*headers* []]
+        (mh/write-header! baos "/foo/v1")
+        (mh/write-header! baos "/bar/v3")
+        (is (= ["/foo/v1" "/bar/v3"] mh/*headers*)
+            "should add to *headers*")))
+    (testing "reading headers"
+      (binding [mh/*headers* []]
+        (let [bais (ByteArrayInputStream. (.toByteArray baos))]
+          (is (= "/foo/v1" (mh/read-header! bais)))
+          (is (= "/bar/v3" (mh/read-header! bais))))
+        (is (= ["/foo/v1" "/bar/v3"] mh/*headers*)
+            "should add to *headers*")))))

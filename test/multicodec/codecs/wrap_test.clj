@@ -33,6 +33,6 @@
             "should read header and delegate to codec")))
     (testing "bad header"
       (let [baos (ByteArrayOutputStream.)]
-        (wrap/write-header-encoded! foo baos "/bar" :abc)
+        (codec/encode-with-header! foo baos "/bar" :abc)
         (is (thrown? RuntimeException
                      (codec/decode wrapped (.toByteArray baos))))))))

@@ -15,7 +15,12 @@
 
 ;; This var can be bound to find out what codec the mux used internally when
 ;; encoding or decoding a value.
-(def ^:dynamic *dispatched-codec*)
+(def
+  ^{:dynamic true
+    :doc "This var can be bound to nil in a thread to discover what codec was
+         actually invoked by a mux codec operation. Encoding or decoding sets
+         the var to the selected subcodec's keyword."}
+  *dispatched-codec*)
 
 
 (defn- find-encodable
@@ -36,7 +41,7 @@
 ;; ## Multiplexing Codec
 
 (defrecord MuxCodec
-  [header codecs]
+  [codecs]
 
   codec/Encoder
 
@@ -53,28 +58,28 @@
                  (str "No codecs can encode value: " (pr-str value))
                  {:codecs (keys codecs)
                   :value value})))
-      (when (bound? #'*dispatched-codec*)
+      (when (thread-bound? #'*dispatched-codec*)
         (set! *dispatched-codec* codec-key))
-      (wrap/write-header-encoded! codec output (:header codec) value)))
+      (codec/encode-with-header! codec output value)))
 
 
   codec/Decoder
 
   (decodable?
-    [this header']
-    (boolean (find-decodable codecs header')))
+    [this header]
+    (boolean (find-decodable codecs header)))
 
 
   (decode!
     [this input]
-    (let [header' (header/read-header! input)
-          [codec-key codec] (find-decodable codecs header')]
+    (let [header (header/read-header! input)
+          [codec-key codec] (find-decodable codecs header)]
       (when-not codec
         (throw (ex-info
-                 (str "No codecs can decode header: " (pr-str header'))
+                 (str "No codecs can decode header: " (pr-str header))
                  {:codecs (keys codecs)
-                  :header header'})))
-      (when (bound? #'*dispatched-codec*)
+                  :header header})))
+      (when (thread-bound? #'*dispatched-codec*)
         (set! *dispatched-codec* codec-key))
       (codec/decode! codec input))))
 
@@ -119,7 +124,7 @@
       (throw (IllegalArgumentException.
                (str "Every codec must specify a header path: "
                     (pr-str bad-codecs)))))
-    (MuxCodec. "/multicodec" codec-map)))
+    (MuxCodec. codec-map)))
 
 
 ;; Remove automatic constructor functions.
