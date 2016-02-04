@@ -53,7 +53,7 @@
                  (str "No codecs can encode value: " (pr-str value))
                  {:codecs (keys codecs)
                   :value value})))
-      (when (bound? #'*dispatched-codec*)
+      (when (thread-bound? #'*dispatched-codec*)
         (set! *dispatched-codec* codec-key))
       (codec/encode-with-header! codec output value)))
 
@@ -74,7 +74,7 @@
                  (str "No codecs can decode header: " (pr-str header'))
                  {:codecs (keys codecs)
                   :header header'})))
-      (when (bound? #'*dispatched-codec*)
+      (when (thread-bound? #'*dispatched-codec*)
         (set! *dispatched-codec* codec-key))
       (codec/decode! codec input))))
 
