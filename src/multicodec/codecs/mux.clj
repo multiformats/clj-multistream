@@ -41,7 +41,7 @@
 ;; ## Multiplexing Codec
 
 (defrecord MuxCodec
-  [header codecs]
+  [codecs]
 
   codec/Encoder
 
@@ -66,19 +66,19 @@
   codec/Decoder
 
   (decodable?
-    [this header']
-    (boolean (find-decodable codecs header')))
+    [this header]
+    (boolean (find-decodable codecs header)))
 
 
   (decode!
     [this input]
-    (let [header' (header/read-header! input)
-          [codec-key codec] (find-decodable codecs header')]
+    (let [header (header/read-header! input)
+          [codec-key codec] (find-decodable codecs header)]
       (when-not codec
         (throw (ex-info
-                 (str "No codecs can decode header: " (pr-str header'))
+                 (str "No codecs can decode header: " (pr-str header))
                  {:codecs (keys codecs)
-                  :header header'})))
+                  :header header})))
       (when (thread-bound? #'*dispatched-codec*)
         (set! *dispatched-codec* codec-key))
       (codec/decode! codec input))))
@@ -124,7 +124,7 @@
       (throw (IllegalArgumentException.
                (str "Every codec must specify a header path: "
                     (pr-str bad-codecs)))))
-    (MuxCodec. "/multicodec" codec-map)))
+    (MuxCodec. codec-map)))
 
 
 ;; Remove automatic constructor functions.
