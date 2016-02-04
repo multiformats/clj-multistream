@@ -9,6 +9,17 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ...
 
+## [0.5.1] - 2016-02-04
+
+### Added
+- Add `encode-with-header!` and `decode-with-header!` functions to core
+  namespace, which write and read headers before encoded data.
+- Add `header/*headers*` dynamic var which will capture the actual header paths
+  which were read or written during an operation.
+
+### Changed
+- Mux codecs no longer have a default header of `"/multicodec"`.
+
 ## [0.5.0] - 2016-01-22
 
 This version includes a breaking change which splits `multicodec.codecs` into
@@ -58,7 +69,8 @@ or decoding a header, respectively.
 
 Initial project release
 
-[Unreleased]: https://github.com/greglook/clj-multicodec/compare/0.5.0...HEAD
+[Unreleased]: https://github.com/greglook/clj-multicodec/compare/0.5.1...HEAD
+[0.5.1]: https://github.com/greglook/clj-multicodec/compare/0.5.0...0.5.1
 [0.5.0]: https://github.com/greglook/clj-multicodec/compare/0.4.0...0.5.0
 [0.4.0]: https://github.com/greglook/clj-multicodec/compare/0.3.0...0.4.0
 [0.3.0]: https://github.com/greglook/clj-multicodec/compare/0.2.0...0.3.0
