@@ -3,8 +3,7 @@
   is equivalent to calling the wrapped codec with the `encode-with-header!` and
   `decode-with-header!` functions from the core ns."
   (:require
-    [multicodec.core :as codec]
-    [multicodec.header :as header]))
+    [multicodec.core :as codec]))
 
 
 (defrecord WrapperCodec
