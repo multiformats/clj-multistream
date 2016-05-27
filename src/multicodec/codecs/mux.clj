@@ -24,10 +24,12 @@
 
 
 (defn- find-encodable
-  "Finds the first codec in the map which can encode the given value. Returns a
-  vector of the key and codec entry, or nil if none are found."
+  "Finds the first codec in the map which can encode the given value. Only
+  codecs with headers are considered. Returns a vector of the key and codec
+  entry, or nil if none are found."
   [codecs value]
-  (first (filter #(codec/encodable? (val %) value) codecs)))
+  (first (filter #(and (:header (val %)) (codec/encodable? (val %) value))
+                 codecs)))
 
 
 (defn- find-decodable
@@ -56,7 +58,8 @@
       (when-not codec
         (throw (ex-info
                  (str "No codecs can encode value: " (pr-str value))
-                 {:codecs (keys codecs)
+                 {:type ::no-codec
+                  :codecs (keys codecs)
                   :value value})))
       (when (thread-bound? #'*dispatched-codec*)
         (set! *dispatched-codec* codec-key))
@@ -77,7 +80,8 @@
       (when-not codec
         (throw (ex-info
                  (str "No codecs can decode header: " (pr-str header))
-                 {:codecs (keys codecs)
+                 {:type ::no-codec
+                  :codecs (keys codecs)
                   :header header})))
       (when (thread-bound? #'*dispatched-codec*)
         (set! *dispatched-codec* codec-key))
@@ -119,11 +123,6 @@
     (throw (IllegalArgumentException.
              "mux-codec must be given an even number of arguments")))
   (let [codec-map (apply array-map codecs)]
-    (when-let [bad-codecs (seq (remove (comp string? :header)
-                                       (vals codec-map)))]
-      (throw (IllegalArgumentException.
-               (str "Every codec must specify a header path: "
-                    (pr-str bad-codecs)))))
     (MuxCodec. codec-map)))
 
 
