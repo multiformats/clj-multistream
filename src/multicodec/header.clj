@@ -88,10 +88,12 @@
   (let [content (byte-array length)]
     (loop [offset 0
            remaining length]
-      (let [n (.read input content offset remaining)]
-        (if (< n remaining)
-          (recur (+ offset n) (- remaining n))
-          content)))))
+      (if (pos? (.available input))
+        (let [n (.read input content offset remaining)]
+          (if (< n remaining)
+            (recur (+ offset n) (- remaining n))
+            content))
+        content))))
 
 
 (defn read-header!
