@@ -17,8 +17,8 @@
         "construction with no codecs should throw exception")
     (is (thrown? IllegalArgumentException (mux/mux-codec :foo))
         "construction with odd args should throw exception")
-    (is (thrown? IllegalArgumentException (mux/mux-codec :foo (mock-codec :foo nil)))
-        "construction with no-header arg should throw exception"))
+    (is (mux/mux-codec :foo (mock-codec :foo nil))
+        "construction with no-header arg should not throw exception"))
   (let [mux (mux/mux-codec
               :foo (mock-codec :foo "/foo")
               :bar (mock-codec :bar "/bar"))]
