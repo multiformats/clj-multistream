@@ -6,13 +6,24 @@ clj-multicodec
 [![API codox](https://img.shields.io/badge/doc-API-blue.svg)](https://greglook.github.io/clj-multicodec/api/)
 [![marginalia docs](http://img.shields.io/badge/doc-marginalia-blue.svg)](https://greglook.github.io/clj-multicodec/marginalia/uberdoc.html)
 [![Join the chat at https://gitter.im/greglook/clj-multicodec](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/greglook/clj-multicodec)
+[![](https://img.shields.io/badge/freenode-%23ipfs-blue.svg?style=flat-square)](http://webchat.freenode.net/?channels=%23ipfs)
+
+> Clojure implementation of multicodec headers
 
 A Clojure library implementing the
-[multicodec](https://github.com/jbenet/multicodec) standard. This provides a
+[multicodec](https://github.com/multiformats/multicodec) standard. This provides a
 content-agnostic way to prefix binary data with its encoding in a way that is
 both human and machine-readable.
 
-## Installation
+## Table of Contents
+
+- [Install](#install)
+- [Usage](#usage)
+- [Maintainers](#maintainers)
+- [Contribute](#contribute)
+- [License](#license)
+
+## Install
 
 Library releases are published on Clojars. To use the latest version with
 Leiningen, add the following dependency to your project definition:
@@ -121,7 +132,19 @@ true
 "foo"
 ```
 
+## Maintainers
+
+Captain: [@greglook](https://github.com/greglook).
+
+## Contribute
+
+Contributions welcome. Please check out [the issues](https://github.com/multiformats/clj-multicodec/issues).
+
+Check out our [contributing document](https://github.com/multiformats/multiformats/blob/master/contributing.md) for more information on how we work, and about contributing in general. Please be aware that all interactions related to multiformats are subject to the IPFS [Code of Conduct](https://github.com/ipfs/community/blob/master/code-of-conduct.md).
+
+Small note: If editing the Readme, please conform to the [standard-readme](https://github.com/RichardLitt/standard-readme) specification.
+
 ## License
 
 This is free and unencumbered software released into the public domain.
-See the UNLICENSE file for more information.
+See the [UNLICENSE](README) file for more information.
