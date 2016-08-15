@@ -15,6 +15,14 @@ A Clojure library implementing the
 content-agnostic way to prefix binary data with its encoding in a way that is
 both human and machine-readable.
 
+## Table of Contents
+
+- [Install](#install)
+- [Usage](#usage)
+- [Maintainers](#maintainers)
+- [Contribute](#contribute)
+- [License](#license)
+
 ## Install
 
 Library releases are published on Clojars. To use the latest version with
@@ -139,4 +147,4 @@ Small note: If editing the Readme, please conform to the [standard-readme](https
 ## License
 
 This is free and unencumbered software released into the public domain.
-See the UNLICENSE file for more information.
+See the [UNLICENSE](README) file for more information.
