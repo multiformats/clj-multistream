@@ -1,12 +1,13 @@
 clj-multicodec
 ==============
 
-[![Build Status](https://travis-ci.org/greglook/clj-multicodec.svg?branch=develop)](https://travis-ci.org/greglook/clj-multicodec)
+[![Build Status](https://api.travis-ci.org/greglook/clj-multicodec.svg?branch=develop)](https://travis-ci.org/greglook/clj-multicodec)
 [![Coverage Status](https://coveralls.io/repos/greglook/clj-multicodec/badge.svg?branch=develop&service=github)](https://coveralls.io/github/greglook/clj-multicodec?branch=develop)
-[![API codox](https://img.shields.io/badge/doc-API-blue.svg)](https://greglook.github.io/clj-multicodec/api/)
-[![marginalia docs](https://img.shields.io/badge/doc-marginalia-blue.svg)](https://greglook.github.io/clj-multicodec/marginalia/uberdoc.html)
-[![Join the chat at https://gitter.im/greglook/clj-multicodec](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/greglook/clj-multicodec)
-[![](https://img.shields.io/badge/freenode-%23ipfs-blue.svg?style=flat-square)](http://webchat.freenode.net/?channels=%23ipfs)
+[![API codox](https://img.shields.io/badge/doc-API-blue.svg)](https://multiformats.github.io/clj-multicodec/api/)
+[![marginalia docs](https://img.shields.io/badge/doc-marginalia-blue.svg)](https://multiformats.github.io/clj-multicodec/marginalia/uberdoc.html)
+[![](https://img.shields.io/badge/freenode-%23ipfs-blue.svg?style=flat-square)](https://webchat.freenode.net/?channels=%23ipfs)
+[![](https://img.shields.io/badge/project-multiformats-blue.svg?style=flat-square)](https://github.com/multiformats/multiformats)
+[![](https://img.shields.io/badge/readme%20style-standard-brightgreen.svg?style=flat-square)](https://github.com/RichardLitt/standard-readme)
 
 > Clojure implementation of multicodec headers
 
@@ -28,7 +29,7 @@ both human and machine-readable.
 Library releases are published on Clojars. To use the latest version with
 Leiningen, add the following dependency to your project definition:
 
-[![Clojars Project](https://clojars.org/mvxcvi/multicodec/latest-version.svg)](http://clojars.org/mvxcvi/multicodec)
+[![Clojars Project](https://clojars.org/mvxcvi/multicodec/latest-version.svg)](https://clojars.org/mvxcvi/multicodec)
 
 ## Usage
 
@@ -142,9 +143,9 @@ Contributions welcome. Please check out [the issues](https://github.com/multifor
 
 Check out our [contributing document](https://github.com/multiformats/multiformats/blob/master/contributing.md) for more information on how we work, and about contributing in general. Please be aware that all interactions related to multiformats are subject to the IPFS [Code of Conduct](https://github.com/ipfs/community/blob/master/code-of-conduct.md).
 
-Small note: If editing the Readme, please conform to the [standard-readme](https://github.com/RichardLitt/standard-readme) specification.
+Small note: If editing the README, please conform to the [standard-readme](https://github.com/RichardLitt/standard-readme) specification.
 
 ## License
 
 This is free and unencumbered software released into the public domain.
-See the [UNLICENSE](README) file for more information.
+See the [UNLICENSE](UNLICENSE) file for more information.
