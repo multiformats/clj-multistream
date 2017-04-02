@@ -5,8 +5,6 @@
     [multicodec.core :as codec]))
 
 
-;; ## Filter Codec
-
 (defrecord FilterCodec
   [header codec encoding-fn decoding-fn]
 
@@ -44,6 +42,10 @@
         value))))
 
 
+(alter-meta! #'->FilterCodec assoc :private true)
+(alter-meta! #'map->FilterCodec assoc :private true)
+
+
 (defn filter-codec
   "Creates a new filter codec, wrapping the given codec. Opts may include:
 
@@ -51,13 +53,8 @@
   - `:encoding` function which will transform values before they are encoded
   - `:decoding` function which will transform values after they are decoded"
   [codec & {:as opts}]
-  (FilterCodec.
+  (->FilterCodec
     (:header opts (:header codec))
     codec
     (:encoding opts)
     (:decoding opts)))
-
-
-;; Remove automatic constructor functions.
-(ns-unmap *ns* '->FilterCodec)
-(ns-unmap *ns* 'map->FilterCodec)
