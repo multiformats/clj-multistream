@@ -37,5 +37,5 @@
 
 (defn gzip-codec
   "Creates a compression codec which will apply GZIP to the encoded data."
-  [codec]
+  []
   (->GZIPCodec "/gzip/"))

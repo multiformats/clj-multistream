@@ -58,7 +58,7 @@
 
 
 (defcodec BinaryCodec
-  []
+  [header]
 
   (processable?
     [this hdr]
@@ -80,4 +80,4 @@
 (defn bin-codec
   "Creates a new binary codec."
   []
-  (map->BinaryCodec nil))
+  (map->BinaryCodec {:header header}))
