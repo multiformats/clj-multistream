@@ -2,34 +2,35 @@
   (:require
     [clojure.test :refer :all]
     [multicodec.core :as codec]
-    [multicodec.test-utils :refer [mock-codec]]
     [multicodec.codecs.filter :as filter]))
 
 
 (deftest filter-codec
-  (testing "without coding filters"
-    (let [fltr (filter/filter-codec (mock-codec :foo "/foo"))]
-      (testing "predicates"
-        (is (codec/encodable? fltr :foo)
-            "should pass encodable check to wrapped codec")
-        (is (codec/decodable? fltr "/foo")
-            "should pass decodable check to wrapped codec"))
-      (testing "encoding roundtrip"
-        (let [encoded (codec/encode fltr 1234)]
-          (is (= 4 (count encoded)) "should write the correct number of bytes")
-          (is (= [:foo "1234"]
-                 (codec/decode fltr encoded)))))))
-  (testing "with coding filters"
-    (let [fltr (filter/filter-codec (mock-codec :foo "/foo")
-                                    :encoding #(vector :encoded %)
-                                    :decoding #(vector :decoded %))]
-      (testing "predicates"
-        (is (codec/encodable? fltr :foo)
-            "should pass encodable check to wrapped codec")
-        (is (codec/decodable? fltr "/foo")
-            "should pass decodable check to wrapped codec"))
-      (testing "encoding roundtrip"
-        (let [encoded (codec/encode fltr 1234)]
-          (is (= 15 (count encoded)) "should write the correct number of bytes")
-          (is (= [:decoded [:foo "[:encoded 1234]"]]
-                 (codec/decode fltr encoded))))))))
+  (testing "empty codec"
+    (let [codec (filter/filter-codec)]
+      (is (not (codec/processable? codec "/bin/")))
+      (is (not (codec/processable? codec "/filter/")))
+      (is (= :stream (codec/encode-stream codec nil :stream))
+          "lack of encode-fn returns original stream")
+      (is (= :stream (codec/decode-stream codec nil :stream))
+          "lack of decode-fn returns original stream")))
+  (testing "filtered codec"
+    (let [codec (filter/filter-codec
+                  :encode-fn inc
+                  :decode-fn dec)]
+      (with-open [stream (codec/encode-stream
+                           codec nil
+                           (reify codec/EncoderStream
+                             (write! [_ value]
+                               (is (= 9 value))
+                               1)
+                             java.io.Closeable
+                             (close [_] nil)))]
+        (is (= 1 (codec/write! stream 8))))
+      (with-open [stream (codec/decode-stream
+                           codec nil
+                           (reify codec/DecoderStream
+                             (read! [_] 1)
+                             java.io.Closeable
+                             (close [_] nil)))]
+        (is (= 0 (codec/read! stream)))))))
