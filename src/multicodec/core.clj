@@ -6,7 +6,8 @@
     (java.io
       ByteArrayInputStream
       ByteArrayOutputStream
-      InputStream)))
+      InputStream
+      OutputStream)))
 
 
 (def headers
@@ -148,6 +149,10 @@
 
   (encoder-stream
     [this output selectors]
+    (when-not (instance? OutputStream output)
+      (throw (ex-info "The output argument to encoder-stream must be a java.io.OutputStream"
+                      {:output output
+                       :selectors selectors})))
     (let [stream (reduce (fn wrap-codec
                            [stream selector]
                            (let [codec (select-codec this selector)]
@@ -162,6 +167,9 @@
 
   (decoder-stream
     [this input]
+    (when-not (instance? InputStream input)
+      (throw (ex-info "The input argument to decoder-stream must be a java.io.InputStream"
+                      {:input input})))
     (loop [stream input]
       (cond
         ;; Finished building a decoder, so return.
