@@ -2,31 +2,30 @@
   (:require
     [clojure.test :refer :all]
     [multicodec.core :as codec]
-    [multicodec.codecs.bin :as bin]))
+    [multicodec.codecs.bin :as bin]
+    [multicodec.header :as header])
+  (:import
+    (java.io
+      ByteArrayInputStream
+      ByteArrayOutputStream)))
 
 
-(deftest bin-codec
-  (let [bin (bin/bin-codec)
-        content (byte-array 10)]
-    (.nextBytes (java.security.SecureRandom.) content)
-    (testing "predicates"
-      (is (codec/encodable? bin content)
-          "byte array should be encodable")
-      (is (not (codec/encodable? bin "foo"))
-          "string should not be encodable")
-      (is (codec/decodable? bin (:header bin))
-          "bin header should be decodable")
-      (is (not (codec/decodable? bin "/text"))
-          "text header should not be decodable"))
-    (let [encoded (codec/encode bin content)]
-      (testing "encoding"
-        (is (= (count encoded) (count content))
-            "should encode bytes one-to-one")
-        (is (every? true? (map = content encoded))
-            "should return same bytes as encoded"))
-      (testing "decoding"
-        (let [decoded (codec/decode bin encoded)]
-          (is (= (count decoded) (count content))
-              "should decode bytes one-to-one")
-          (is (every? true? (map = content decoded))
-              "should decode same bytes as content"))))))
+(deftest binary-codec
+  (let [codec (bin/bin-codec)
+        content "foo bar baz"]
+    (testing "processable headers"
+      (is (codec/processable? codec "/bin/"))
+      (is (not (codec/processable? codec "/text/"))))
+    (let [baos (ByteArrayOutputStream.)]
+      (with-open [stream (codec/encode-stream codec nil baos)]
+        (is (satisfies? codec/EncoderStream stream))
+        (is (= 11 (codec/write! stream (.getBytes content)))))
+      (let [output-bytes (.toByteArray baos)]
+        (is (= 18 (count output-bytes)))
+        (let [input (ByteArrayInputStream. output-bytes)]
+          (is (= bin/header (header/read-header! input)))
+          (with-open [stream (codec/decode-stream codec bin/header input)]
+            (is (satisfies? codec/DecoderStream stream))
+            (let [value (codec/read! stream)]
+              (is (bytes? value))
+              (is (= content (String. value))))))))))
