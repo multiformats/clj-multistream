@@ -2,12 +2,18 @@
   "Binary codec which simply encodes and decodes raw byte sequences."
   (:require
     [clojure.java.io :as io]
-    [multicodec.core :as codec])
+    [multicodec.core :as codec]
+    [multicodec.header :as header])
   (:import
     (java.io
       ByteArrayOutputStream
+      Closeable
       InputStream
       OutputStream)))
+
+
+(def ^:const header "/bin/")
+
 
 
 ;; ## Encoding Protocol
@@ -34,41 +40,75 @@
 
 ;; ## Binary Codec
 
-(defrecord BinaryCodec
-  [header]
+(defrecord BinaryEncoderStream
+  [^OutputStream output]
 
-  codec/Encoder
+  codec/EncoderStream
 
-  (encodable?
+  (write!
     [this value]
-    (satisfies? BinaryData value))
-
-
-  (encode!
-    [this output value]
     (write-bytes! value output))
 
+  Closeable
 
-  codec/Decoder
-
-  (decodable?
-    [this header']
-    (= header header'))
+  (close
+    [this]
+    (.close output)))
 
 
-  (decode!
-    [this input]
+; TODO: option to limit the max size to read?
+(defrecord BinaryDecoderStream
+  [^InputStream input]
+
+  codec/DecoderStream
+
+  (read!
+    [this]
     (let [baos (ByteArrayOutputStream.)]
       (io/copy input baos)
-      (.toByteArray baos))))
+      (.toByteArray baos)))
+
+  Closeable
+
+  (close
+    [this]
+    (.close input)))
+
+
+(defrecord BinaryCodec
+  []
+
+  codec/Codec
+
+  (processable?
+    [this hdr]
+    (= header hdr))
+
+
+  (encode-stream
+    [this _ ctx]
+    (let [output ^OutputStream (::codec/output ctx)]
+      (header/write-header! output header)
+      (-> ctx
+          (dissoc ::codec/output)
+          (assoc ::codec/encoder (BinaryEncoderStream. output)))))
+
+
+  (decode-stream
+    [this _ ctx]
+    (let [input (::codec/input ctx)]
+      (-> ctx
+          (dissoc ::codec/input)
+          (assoc ::codec/decoder (BinaryDecoderStream. input))))))
+
+
+(alter-meta! #'->BinaryEncoderStream assoc :private true)
+(alter-meta! #'->BinaryDecoderStream assoc :private true)
+(alter-meta! #'->BinaryCodec assoc :private true)
+(alter-meta! #'map->BinaryCodec assoc :private true)
 
 
 (defn bin-codec
   "Creates a new binary codec."
   []
-  (BinaryCodec. (codec/headers :bin)))
-
-
-;; Remove automatic constructor functions.
-(ns-unmap *ns* '->BinaryCodec)
-(ns-unmap *ns* 'map->BinaryCodec)
+  (map->BinaryCodec nil))

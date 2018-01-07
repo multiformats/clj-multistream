@@ -5,10 +5,9 @@
   (:import
     (java.io
       ByteArrayInputStream
-      ByteArrayOutputStream)))
+      ByteArrayOutputStream
+      InputStream)))
 
-
-;; ## Constants
 
 (def headers
   "Map of codec keywords to header paths, drawn from the multicodec standards
@@ -45,82 +44,141 @@
 
 
 
-;; ## Encoding
+;; ## Codec Protocols
 
-(defprotocol Encoder
-  "An encoder converts values to binary sequences and writes the results to an
-  output stream."
+(defprotocol EncoderStream
+  "A stream which can be used to encode values to some underlying byte output
+  stream."
 
-  (encodable?
-    [codec value]
-    "Returns true if the value type can be encoded by this codec.")
-
-  (encode!
-    [codec ^java.io.OutputStream output value]
-    "Write the value as a sequence of bytes to the output stream. Returns the
+  (write!
+    [stream value]
+    "Write the value as a sequence of bytes to the stream. Returns the
     number of bytes written. Throws an exception if the value cannot be
     encoded."))
 
 
-(defn encode
-  "Converts a value to a binary sequence and returns them as a byte array."
-  ^bytes
-  [codec value]
-  (let [baos (ByteArrayOutputStream.)]
-    (encode! codec baos value)
-    (.toByteArray baos)))
+(defprotocol DecoderStream
+  "A stream which can be used to decode values from some underlying byte input
+  stream."
+
+  (read!
+    [stream]
+    "Read the next value from the underlying byte stream. Returns the
+    decoded value. Throws an exception if the read bytes are invalid.
+    The behavior when the end of the input stream is reached is
+    implementation-specific."))
 
 
-(defn encode-with-header!
-  "Writes a header to the output stream, then writes out the encoded value.
-  Returns the number of bytes written.
+(defprotocol Codec
+  "A codec provides a central place for collecting options and producing new
+  stream instances."
 
-  If a header is not given, the codec's header is used."
-  ([codec output value]
-   (encode-with-header! codec output (:header codec) value))
-  ([codec output header value]
-   (let [header-length (header/write-header! output header)
-         body-length (encode! codec output value)]
-     (+ header-length body-length))))
-
-
-
-;; ## Decoding
-
-(defprotocol Decoder
-  "A decoder reads binary sequences and interpretes them as Clojure values."
-
-  (decodable?
+  (processable?
     [codec header]
-    "Returns true if the codec supports decoding of the given header.")
+    "Return true if this codec can process the given header.")
 
-  (decode!
-    [codec ^java.io.InputStream input]
-    "Reads bytes from the input stream and returns the read value. May not fully
-    consume the stream if multiple items are present. Throws an exception if the
-    input is malformed or incomplete."))
+  (encode-stream
+    [codec selector ctx]
+    "Apply encoding to the given stream context. This may write multicodec
+    headers to the output stream.
+
+    The stream context map may include:
+
+    - `::headers`
+      A vector of header strings which have been written to the output.
+    - `::output`
+      A `java.io.OutputStream` which can write raw bytes.
+    - `::encoder`
+      An `EncoderStream` which can write values.
+
+    The codec should enforce its assumptions about the context.")
+
+  (decode-stream
+    [codec header ctx]
+    "Apply decoding to the given stream context. This may read and assert
+    multicodec headers from the input stream.
+
+    The stream context map may include:
+
+    - `::headers`
+      A vector of header strings read from the input.
+    - `::input`
+      A `java.io.InputStream` which can read raw bytes.
+    - `::decoder`
+      A `DecoderStream` which can read values.
+
+    The codec should enforce its assumptions about the context."))
 
 
-(defn decode
-  "Reads data from a byte array and returns the decoded value."
-  [codec ^bytes byte-data]
-  (let [bais (ByteArrayInputStream. byte-data)]
-    (decode! codec bais)))
+(defprotocol CodecFactory
+  "A codec factory supports the creation of encoder and decoder streams by
+  composing codecs together."
+
+  (encoder-stream
+    [codec output select-codecs]
+    "Open a new encoder stream to write values to the given byte output.
+
+    The `select-codecs` argument may be a vector of either codec keywords or
+    headers processable by one of the codecs in the factory.")
+
+  (decoder-stream
+    [codec input]
+    "Open a new decoding stream to read values from the given byte input."))
 
 
-(defn decode-with-header!
-  "Reads a multicodec header from the input stream and checks it against the one
-  provided. Throws an exception if the header does not match, otherwise uses the
-  codec to read a value from the stream.
 
-  If a header is not given, the codec's header is used."
-  ([codec input]
-   (decode-with-header! codec input (:header codec)))
-  ([codec input header]
-   (let [header' (header/read-header! input)]
-     (when-not (= header header')
-       (throw (ex-info
-                (format "The stream header %s did not match expected header %s"
-                        (pr-str header') (pr-str header))
-                {:expected header, :actual header'})))
-     (decode! codec input))))
+;; ## Multiplex Codec
+
+(defn- select-codec
+  "Select a codec from the mux by keyword or which can process this header.
+  Returns a vector with the codec type key and the selected codec."
+  [factory selector]
+  (or (if (keyword? selector)
+        (get factory selector)
+        (first (filter #(processable? % selector) (vals factory)))))
+      (throw (ex-info (str "No codec found for selector " (pr-str selector))
+                      {:selector selector
+                       :codecs (keys factory)})))
+
+
+(defrecord MultiCodec
+  []
+
+  CodecFactory
+
+  (encoder-stream
+    [this output selectors]
+    (let [stream (reduce (fn wrap-codec
+                           [stream selector]
+                           (let [codec (select-codec this selector)]
+                             (encode-stream codec selector stream)))
+                         output selectors)]
+      (when-not (satisfies? EncoderStream stream)
+        (throw (ex-info "Encoder selection did not result in an encoding stream!"
+                        {:selectors selectors
+                         :stream stream})))
+      stream))
+
+
+  (decoder-stream
+    [this input]
+    (loop [stream input]
+      (cond
+        ;; Finished building a decoder, so return.
+        (satisfies? DecoderStream stream) stream
+
+        ;; Read a header from the input to dispatch.
+        (instance? InputStream stream)
+          (let [header (header/read-header! stream)
+                codec (select-codec this header)]
+            (recur (decode-stream codec header stream)))
+
+        :else
+          (throw (ex-info "Decoder dispatch resulted in unusable stream!"
+                          {:stream stream}))))))
+
+
+(defn multi-codec
+  "Construct a new multi-codec factory."
+  [& {:as opts}]
+  (map->MultiCodec opts))
