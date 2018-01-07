@@ -1,4 +1,4 @@
-(ns multicodec.codecs.compress
+(ns multicodec.codec.compress
   "Compression codec which transforms the byte stream after it is encoded and
   before it is decoded by the next codec."
   (:require

@@ -1,4 +1,4 @@
-(ns multicodec.codecs.label
+(ns multicodec.codec.label
   "Wrapper codec which writes out and reads a header before the value body.
   This doesn't change any of the following data, but is useful for labeling the
   purpose of the data."

@@ -2,10 +2,10 @@
   (:require
     [clojure.string :as str]
     [clojure.test :refer :all]
-    [multicodec.codecs.bin :refer [bin-codec]]
-    [multicodec.codecs.compress :refer [gzip-codec]]
-    [multicodec.codecs.text :refer [text-codec]]
-    [multicodec.codecs.label :refer [label-codec]]
+    [multicodec.codec.bin :refer [bin-codec]]
+    [multicodec.codec.compress :refer [gzip-codec]]
+    [multicodec.codec.label :refer [label-codec]]
+    [multicodec.codec.text :refer [text-codec]]
     [multicodec.core :as codec]
     [multicodec.header :as header])
   (:import

@@ -1,4 +1,4 @@
-(ns multicodec.codecs.filter
+(ns multicodec.codec.filter
   "Logical codec which wraps another codec to transform the data before it is
   encoded or after it is decoded."
   (:require

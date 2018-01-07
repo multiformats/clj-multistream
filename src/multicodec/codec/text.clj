@@ -1,4 +1,4 @@
-(ns multicodec.codecs.text
+(ns multicodec.codec.text
   "Text codec which uses UTF-8 to serialize strings."
   (:require
     [clojure.java.io :as io]

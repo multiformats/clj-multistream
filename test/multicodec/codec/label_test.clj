@@ -1,7 +1,7 @@
-(ns multicodec.codecs.label-test
+(ns multicodec.codec.label-test
   (:require
     [clojure.test :refer :all]
-    [multicodec.codecs.label :as label]
+    [multicodec.codec.label :as label]
     [multicodec.core :as codec]
     [multicodec.header :as header])
   (:import

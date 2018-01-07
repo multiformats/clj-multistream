@@ -1,4 +1,4 @@
-(ns multicodec.codecs.bin
+(ns multicodec.codec.bin
   "Binary codec which simply encodes and decodes raw byte sequences."
   (:require
     [clojure.java.io :as io]

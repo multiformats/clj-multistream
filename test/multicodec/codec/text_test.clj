@@ -1,8 +1,8 @@
-(ns multicodec.codecs.text-test
+(ns multicodec.codec.text-test
   (:require
     [clojure.test :refer :all]
+    [multicodec.codec.text :as text]
     [multicodec.core :as codec]
-    [multicodec.codecs.text :as text]
     [multicodec.header :as header])
   (:import
     (java.io
