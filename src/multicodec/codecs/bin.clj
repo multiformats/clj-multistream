@@ -2,12 +2,11 @@
   "Binary codec which simply encodes and decodes raw byte sequences."
   (:require
     [clojure.java.io :as io]
-    [multicodec.core :as codec]
+    [multicodec.core :as codec :refer [defcodec defdecoder defencoder]]
     [multicodec.header :as header])
   (:import
     (java.io
       ByteArrayOutputStream
-      Closeable
       InputStream
       OutputStream)))
 
@@ -40,45 +39,27 @@
 
 ;; ## Binary Codec
 
-(defrecord BinaryEncoderStream
+(defencoder BinaryEncoderStream
   [^OutputStream output]
-
-  codec/EncoderStream
 
   (write!
     [this value]
-    (write-bytes! value output))
-
-  Closeable
-
-  (close
-    [this]
-    (.close output)))
+    (write-bytes! value output)))
 
 
 ; TODO: option to limit the max size to read?
-(defrecord BinaryDecoderStream
+(defdecoder BinaryDecoderStream
   [^InputStream input]
-
-  codec/DecoderStream
 
   (read!
     [this]
     (let [baos (ByteArrayOutputStream.)]
       (io/copy input baos)
-      (.toByteArray baos)))
-
-  Closeable
-
-  (close
-    [this]
-    (.close input)))
+      (.toByteArray baos))))
 
 
-(defrecord BinaryCodec
+(defcodec BinaryCodec
   []
-
-  codec/Codec
 
   (processable?
     [this hdr]
@@ -86,26 +67,15 @@
 
 
   (encode-stream
-    [this _ ctx]
-    (let [output ^OutputStream (::codec/output ctx)]
+    [this _ stream]
+    (let [output stream]
       (header/write-header! output header)
-      (-> ctx
-          (dissoc ::codec/output)
-          (assoc ::codec/encoder (BinaryEncoderStream. output)))))
+      (->BinaryEncoderStream output)))
 
 
   (decode-stream
-    [this _ ctx]
-    (let [input (::codec/input ctx)]
-      (-> ctx
-          (dissoc ::codec/input)
-          (assoc ::codec/decoder (BinaryDecoderStream. input))))))
-
-
-(alter-meta! #'->BinaryEncoderStream assoc :private true)
-(alter-meta! #'->BinaryDecoderStream assoc :private true)
-(alter-meta! #'->BinaryCodec assoc :private true)
-(alter-meta! #'map->BinaryCodec assoc :private true)
+    [this _ stream]
+    (->BinaryDecoderStream stream)))
 
 
 (defn bin-codec

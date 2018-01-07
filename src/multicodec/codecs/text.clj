@@ -3,11 +3,10 @@
   (:require
     [clojure.java.io :as io]
     [clojure.string :as str]
-    [multicodec.core :as codec]
+    [multicodec.core :as codec :refer [defcodec defdecoder defencoder]]
     [multicodec.header :as header])
   (:import
     (java.io
-      Closeable
       InputStream
       InputStreamReader
       OutputStream
@@ -35,49 +34,31 @@
 
 ;; ## Text Codec
 
-(defrecord TextEncoderStream
-  [^Charset charset
-   ^OutputStreamWriter writer]
-
-  codec/EncoderStream
+(defencoder TextEncoderStream
+  [^OutputStreamWriter writer
+   ^Charset charset]
 
   (write!
     [this value]
     (let [content (str value)]
       (.write writer content)
       (.flush writer)
-      (count (.getBytes content charset))))
-
-  Closeable
-
-  (close
-    [this]
-    (.close writer)))
+      (count (.getBytes content charset)))))
 
 
-(defrecord TextDecoderStream
-  [^Charset charset
-   ^InputStreamReader reader]
-
-  codec/DecoderStream
+(defdecoder TextDecoderStream
+  [^InputStreamReader reader
+   ^Charset charset]
 
   (read!
     [this]
     (let [writer (StringWriter.)]
       (io/copy reader writer)
-      (.toString writer)))
-
-  Closeable
-
-  (close
-    [this]
-    (.close reader)))
+      (.toString writer))))
 
 
-(defrecord TextCodec
+(defcodec TextCodec
   [^Charset default-charset]
-
-  codec/Codec
 
   (processable?
     [this header]
@@ -85,30 +66,20 @@
 
 
   (encode-stream
-    [this selector ctx]
-    (let [output ^OutputStream (::codec/output ctx)
+    [this selector stream]
+    (let [output ^OutputStream stream
           charset (or (header->charset selector) default-charset)
-          header (charset->header charset)
-          encoder (->TextEncoderStream
-                    charset
-                    (OutputStreamWriter. output charset))]
+          header (charset->header charset)]
       (header/write-header! output header)
-      (-> ctx
-          (dissoc ::codec/output)
-          (assoc ::codec/encoder encoder))))
+      (->TextEncoderStream (OutputStreamWriter. output charset) charset)))
 
 
   (decode-stream
-    [this header ctx]
-    (let [input ^InputStream (::codec/input ctx)
+    [this header stream]
+    (let [input ^InputStream stream
           charset (or (header->charset header) default-charset)
-          header (charset->header charset)
-          decoder (->TextDecoderStream
-                    charset
-                    (InputStreamReader. input charset))]
-      (-> ctx
-          (dissoc ::codec/input)
-          (assoc ::codec/decoder decoder)))))
+          header (charset->header charset)]
+      (->TextDecoderStream (InputStreamReader. input charset) charset))))
 
 
 (defn text-codec
