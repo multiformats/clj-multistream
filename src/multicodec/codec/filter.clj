@@ -22,30 +22,40 @@
 
 
 (defcodec FilterCodec
-  [encode-fn decode-fn]
+  [header encode-fn decode-fn]
 
   (processable?
-    [this header]
-    false)
+    [this hdr]
+    (and header (= hdr header)))
 
 
-  (encode-stream
-    [this selector stream]
+  (encode-byte-stream
+    [this selector output-stream]
+    (when header
+      (codec/write-header! output-stream header))
+    output-stream)
+
+
+  (encode-value-stream
+    [this selector encoder-stream]
     (if encode-fn
-      (->FilterEncoderStream stream encode-fn)
-      stream))
+      (->FilterEncoderStream encoder-stream encode-fn)
+      encoder-stream))
 
 
-  (decode-stream
-    [this header stream]
+  (decode-value-stream
+    [this header decoder-stream]
     (if decode-fn
-      (->FilterDecoderStream stream decode-fn)
-      stream)))
+      (->FilterDecoderStream decoder-stream decode-fn)
+      decoder-stream)))
 
 
 (defn filter-codec
   "Creates a new filter codec, wrapping the given codec. Opts may include:
 
+  - `:header`
+    If set, the header will be written out before encoding further values and
+    the codec will respond to `processable?` with true if the header matches.
   - `:encode-fn`
     If provided, the function will transform values before they are encoded.
   - `:decode-fn`

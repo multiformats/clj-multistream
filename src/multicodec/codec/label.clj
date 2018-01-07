@@ -6,23 +6,14 @@
     [multicodec.core :as codec :refer [defcodec]]))
 
 
+; TODO: obviated by filter-codec?
 (defcodec LabelCodec
   [header]
 
-  (processable?
-    [this hdr]
-    (= hdr header))
-
-
-  (encode-stream
-    [this selector stream]
-    (codec/write-header! stream header)
-    stream)
-
-
-  (decode-stream
-    [this header stream]
-    stream))
+  (encode-byte-stream
+    [this selector output-stream]
+    (codec/write-header! output-stream header)
+    output-stream))
 
 
 (defn label-codec

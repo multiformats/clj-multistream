@@ -15,9 +15,9 @@
         baos (ByteArrayOutputStream.)]
     (is (not (codec/processable? codec "/bin/")))
     (is (codec/processable? codec "/foo/"))
-    (is (= :stream (codec/decode-stream codec nil :stream))
+    (is (= :stream (codec/decode-byte-stream codec nil :stream))
         "labels have no effect on decoding stream")
-    (is (= baos (codec/encode-stream codec nil baos)))
+    (is (= baos (codec/encode-byte-stream codec nil baos)))
     (let [output-bytes (.toByteArray baos)
           input (ByteArrayInputStream. output-bytes)]
       (is (= "/foo/" (header/read! input))))))

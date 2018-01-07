@@ -19,14 +19,14 @@
       (is (codec/processable? codec "/text/UTF-8"))
       (is (codec/processable? codec "/text/US-ASCII")))
     (let [baos (ByteArrayOutputStream.)]
-      (with-open [stream (codec/encode-stream codec :text baos)]
+      (with-open [stream (codec/encode-byte-stream codec :text baos)]
         (is (satisfies? codec/EncoderStream stream))
         (is (= 44 (codec/write! stream content))))
       (let [output-bytes (.toByteArray baos)]
         (is (= 57 (count output-bytes)))
         (let [input (ByteArrayInputStream. output-bytes)]
           (is (= "/text/UTF-8" (header/read! input)))
-          (with-open [stream (codec/decode-stream codec "/text/UTF-8" input)]
+          (with-open [stream (codec/decode-byte-stream codec "/text/UTF-8" input)]
             (is (satisfies? codec/DecoderStream stream))
             (let [value (codec/read! stream)]
               (is (string? value))

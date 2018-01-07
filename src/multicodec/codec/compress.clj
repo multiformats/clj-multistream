@@ -17,22 +17,15 @@
 (defcodec GZIPCodec
   [header]
 
-  (processable?
-    [this hdr]
-    (= hdr header))
+  (encode-byte-stream
+    [this _ output-stream]
+    (codec/write-header! output-stream header)
+    (GZIPOutputStream. ^OutputStream output-stream))
 
 
-  (encode-stream
-    [this _ stream]
-    ; TODO: assert stream is an OutputStream
-    (codec/write-header! stream header)
-    (GZIPOutputStream. ^OutputStream stream))
-
-
-  (decode-stream
-    [this _ stream]
-    ; TODO: assert stream is an InputStream
-    (GZIPInputStream. ^InputStream stream)))
+  (decode-byte-stream
+    [this _ input-stream]
+    (GZIPInputStream. ^InputStream input-stream)))
 
 
 (defn gzip-codec

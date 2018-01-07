@@ -10,15 +10,18 @@
     (let [codec (filter/filter-codec)]
       (is (not (codec/processable? codec "/bin/")))
       (is (not (codec/processable? codec "/filter/")))
-      (is (= :stream (codec/encode-stream codec nil :stream))
+      (is (= :stream (codec/encode-value-stream codec nil :stream))
           "lack of encode-fn returns original stream")
-      (is (= :stream (codec/decode-stream codec nil :stream))
+      (is (= :stream (codec/decode-value-stream codec nil :stream))
           "lack of decode-fn returns original stream")))
   (testing "filtered codec"
     (let [codec (filter/filter-codec
+                  :header "/foo/"
                   :encode-fn inc
                   :decode-fn dec)]
-      (with-open [stream (codec/encode-stream
+      (is (not (codec/processable? codec "/bin/")))
+      (is (codec/processable? codec "/foo/"))
+      (with-open [stream (codec/encode-value-stream
                            codec nil
                            (reify codec/EncoderStream
                              (write! [_ value]
@@ -27,7 +30,7 @@
                              java.io.Closeable
                              (close [_] nil)))]
         (is (= 1 (codec/write! stream 8))))
-      (with-open [stream (codec/decode-stream
+      (with-open [stream (codec/decode-value-stream
                            codec nil
                            (reify codec/DecoderStream
                              (read! [_] 1)

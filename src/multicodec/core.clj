@@ -78,37 +78,27 @@
     [codec header]
     "Return true if this codec can process the given header.")
 
-  (encode-stream
-    [codec selector ctx]
-    "Apply encoding to the given stream context. This may write multicodec
-    headers to the output stream.
+  (encode-byte-stream
+    [codec selector output-stream]
+    "Apply encoding to the given stream of bytes. The stream should be a
+    `java.io.OutputStream` instance. This method should return either another
+    `OutputStream` or an `EncoderStream`.
 
-    The stream context map may include:
+    This may write multicodec headers to the stream.")
 
-    - `::headers`
-      A vector of header strings which have been written to the output.
-    - `::output`
-      A `java.io.OutputStream` which can write raw bytes.
-    - `::encoder`
-      An `EncoderStream` which can write values.
+  (encode-value-stream
+    [codec selector encoder-stream]
+    "Wrap encoding logic around the values produced by the given encoder stream.")
 
-    The codec should enforce its assumptions about the context.")
+  (decode-byte-stream
+    [codec header input-stream]
+    "Apply decoding to the given stream of bytes. The stream should be a
+    `java.io.InputStream` instance. This method should return either another
+    `InputStream` or a `DecoderStream`.")
 
-  (decode-stream
-    [codec header ctx]
-    "Apply decoding to the given stream context. This may read and assert
-    multicodec headers from the input stream.
-
-    The stream context map may include:
-
-    - `::headers`
-      A vector of header strings read from the input.
-    - `::input`
-      A `java.io.InputStream` which can read raw bytes.
-    - `::decoder`
-      A `DecoderStream` which can read values.
-
-    The codec should enforce its assumptions about the context."))
+  (decode-value-stream
+    [codec header decoder-stream]
+    "Wrap decoding logic around the values produced by the given decoder stream."))
 
 
 (defprotocol CodecFactory
@@ -155,16 +145,23 @@
       (throw (ex-info "The output argument to encoder-stream must be a java.io.OutputStream"
                       {:output output
                        :selectors selectors})))
-    (let [stream (reduce (fn wrap-codec
-                           [stream selector]
-                           (let [codec (select-codec this selector)]
-                             (encode-stream codec selector stream)))
-                         output selectors)]
+    (let [[stream codecs]
+          (reduce (fn wrap-bytes
+                    [[stream codecs] selector]
+                    (let [codec (select-codec this selector)]
+                      [(encode-byte-stream codec selector stream)
+                       (conj codecs codec)]))
+                  [output []]
+                  selectors)]
       (when-not (satisfies? EncoderStream stream)
         (throw (ex-info "Encoder selection did not result in an encoder stream!"
                         {:selectors selectors
                          :stream stream})))
-      stream))
+      (reduce (fn wrap-values
+                [stream [selector codec]]
+                (encode-value-stream codec selector stream))
+              stream
+              (reverse (map vector selectors codecs)))))
 
 
   (decoder-stream
@@ -172,20 +169,30 @@
     (when-not (instance? InputStream input)
       (throw (ex-info "The input argument to decoder-stream must be a java.io.InputStream"
                       {:input input})))
-    (loop [stream input]
+    (loop [stream input
+           headers []
+           codecs []]
       (cond
         ;; Finished building a decoder, so return.
-        (satisfies? DecoderStream stream) stream
+        (satisfies? DecoderStream stream)
+          (reduce (fn wrap-values
+                    [stream [header codec]]
+                    (decode-value-stream codec header stream))
+                  stream
+                  (reverse (map vector headers codecs)))
 
         ;; Read a header from the input to dispatch.
         (instance? InputStream stream)
           (let [header (header/read! stream)
                 codec (select-codec this header)]
-            (recur (decode-stream codec header stream)))
+            (recur (decode-byte-stream codec header stream)
+                   (conj headers header)
+                   (conj codecs codec)))
 
         :else
           (throw (ex-info "Decoder dispatch resulted in unusable stream!"
-                          {:stream stream}))))))
+                          {:stream stream
+                           :headers headers}))))))
 
 
 (alter-meta! #'->MuxCodecFactory assoc :private true)
@@ -217,7 +224,9 @@
   ; TODO: assert write-form starts with (write! ...)
   `(do
      (defrecord ~name-sym
-       ~attr-vec
+       ~(if (:tag (meta (first attr-vec)))
+          attr-vec
+          (update attr-vec 0 vary-meta assoc :tag 'java.io.Closeable))
 
        EncoderStream
 
@@ -244,7 +253,9 @@
   ; TODO: assert read-form starts with (read! ...)
   `(do
      (defrecord ~name-sym
-       ~attr-vec
+       ~(if (:tag (meta (first attr-vec)))
+          attr-vec
+          (update attr-vec 0 vary-meta assoc :tag 'java.io.Closeable))
 
        DecoderStream
 
@@ -267,13 +278,36 @@
 
   The autogenerated constructors will be private."
   [name-sym attr-vec & more]
-  `(do
-     (defrecord ~name-sym
-       ~attr-vec
+  (let [[method-forms more] (split-with list? more)
+        codec-methods (into {} (map (juxt first identity)) method-forms)
+        default-method #(get codec-methods %1 (cons %1 %2))]
+    `(do
+       (defrecord ~name-sym
+         ~attr-vec
 
-       Codec
+         Codec
 
-       ~@more)
+         ~(default-method 'processable?
+            `([this# header#]
+              (= header# (:header this#))))
 
-     (alter-meta! (var ~(symbol (str "->" name-sym))) assoc :private true)
-     (alter-meta! (var ~(symbol (str "map->" name-sym))) assoc :private true)))
+         ~(default-method 'encode-byte-stream
+            `([this# selector# output-stream#]
+              output-stream#))
+
+         ~(default-method 'encode-value-stream
+            `([this# selector# encoder-stream#]
+              encoder-stream#))
+
+         ~(default-method 'decode-byte-stream
+            `([this# header# input-stream#]
+              input-stream#))
+
+         ~(default-method 'decode-value-stream
+            `([this# header# decoder-stream#]
+              decoder-stream#))
+
+         ~@more)
+
+       (alter-meta! (var ~(symbol (str "->" name-sym))) assoc :private true)
+       (alter-meta! (var ~(symbol (str "map->" name-sym))) assoc :private true))))

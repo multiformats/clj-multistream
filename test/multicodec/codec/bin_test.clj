@@ -17,14 +17,14 @@
       (is (codec/processable? codec "/bin/"))
       (is (not (codec/processable? codec "/text/"))))
     (let [baos (ByteArrayOutputStream.)]
-      (with-open [stream (codec/encode-stream codec nil baos)]
+      (with-open [stream (codec/encode-byte-stream codec nil baos)]
         (is (satisfies? codec/EncoderStream stream))
         (is (= 11 (codec/write! stream (.getBytes content)))))
       (let [output-bytes (.toByteArray baos)]
         (is (= 18 (count output-bytes)))
         (let [input (ByteArrayInputStream. output-bytes)]
           (is (= bin/header (header/read! input)))
-          (with-open [stream (codec/decode-stream codec bin/header input)]
+          (with-open [stream (codec/decode-byte-stream codec bin/header input)]
             (is (satisfies? codec/DecoderStream stream))
             (let [value (codec/read! stream)]
               (is (bytes? value))

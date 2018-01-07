@@ -64,21 +64,23 @@
     (str/starts-with? header header-prefix))
 
 
-  (encode-stream
-    [this selector stream]
-    (let [output ^OutputStream stream
-          charset (or (header->charset selector) default-charset)
+  (encode-byte-stream
+    [this selector output-stream]
+    (let [charset (or (header->charset selector) default-charset)
           header (charset->header charset)]
-      (codec/write-header! output header)
-      (->TextEncoderStream (OutputStreamWriter. output charset) charset)))
+      (codec/write-header! output-stream header)
+      (->TextEncoderStream
+        (OutputStreamWriter. ^OutputStream output-stream charset)
+        charset)))
 
 
-  (decode-stream
-    [this header stream]
-    (let [input ^InputStream stream
-          charset (or (header->charset header) default-charset)
+  (decode-byte-stream
+    [this header input-stream]
+    (let [charset (or (header->charset header) default-charset)
           header (charset->header charset)]
-      (->TextDecoderStream (InputStreamReader. input charset) charset))))
+      (->TextDecoderStream
+        (InputStreamReader. ^InputStream input-stream charset)
+        charset))))
 
 
 (defn text-codec

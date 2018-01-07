@@ -60,24 +60,18 @@
 (defcodec BinaryCodec
   [header]
 
-  (processable?
-    [this hdr]
-    (= header hdr))
+  (encode-byte-stream
+    [this _ output-stream]
+    (codec/write-header! output-stream header)
+    (->BinaryEncoderStream output-stream))
 
 
-  (encode-stream
-    [this _ stream]
-    (let [output stream]
-      (codec/write-header! output header)
-      (->BinaryEncoderStream output)))
-
-
-  (decode-stream
-    [this _ stream]
-    (->BinaryDecoderStream stream)))
+  (decode-byte-stream
+    [this _ input-stream]
+    (->BinaryDecoderStream input-stream)))
 
 
 (defn bin-codec
   "Creates a new binary codec."
   []
-  (map->BinaryCodec {:header header}))
+  (->BinaryCodec header))
