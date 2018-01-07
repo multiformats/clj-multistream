@@ -1,8 +1,8 @@
 (ns multicodec.codecs.compress
-  "Compression codec which wraps another codec to transform the byte stream
-  after it is encoded or before it is decoded by the backing codec."
+  "Compression codec which transforms the byte stream after it is encoded and
+  before it is decoded by the next codec."
   (:require
-    [multicodec.core :as codec])
+    [multicodec.core :as codec :refer [defcodec]])
   (:import
     (java.io
       InputStream

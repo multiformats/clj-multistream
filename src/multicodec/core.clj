@@ -169,7 +169,7 @@
 
         ;; Read a header from the input to dispatch.
         (instance? InputStream stream)
-          (let [header (header/read-header! stream)
+          (let [header (header/read! stream)
                 codec (select-codec this header)]
             (recur (decode-stream codec header stream)))
 
@@ -186,6 +186,13 @@
 
 
 ;; ## Codec Utilities
+
+(defn write-header!
+  "Writes a multicodec header for `path` to the given stream. Returns the
+  number of bytes written."
+  [stream header]
+  (header/write! stream header))
+
 
 (defmacro defencoder
   "Define a new encoder stream record, filling in the protocol and `Closeable`

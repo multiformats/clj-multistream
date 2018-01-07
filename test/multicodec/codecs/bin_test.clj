@@ -23,7 +23,7 @@
       (let [output-bytes (.toByteArray baos)]
         (is (= 18 (count output-bytes)))
         (let [input (ByteArrayInputStream. output-bytes)]
-          (is (= bin/header (header/read-header! input)))
+          (is (= bin/header (header/read! input)))
           (with-open [stream (codec/decode-stream codec bin/header input)]
             (is (satisfies? codec/DecoderStream stream))
             (let [value (codec/read! stream)]

@@ -3,8 +3,7 @@
   (:require
     [clojure.java.io :as io]
     [clojure.string :as str]
-    [multicodec.core :as codec :refer [defcodec defdecoder defencoder]]
-    [multicodec.header :as header])
+    [multicodec.core :as codec :refer [defcodec defdecoder defencoder]])
   (:import
     (java.io
       InputStream
@@ -70,7 +69,7 @@
     (let [output ^OutputStream stream
           charset (or (header->charset selector) default-charset)
           header (charset->header charset)]
-      (header/write-header! output header)
+      (codec/write-header! output header)
       (->TextEncoderStream (OutputStreamWriter. output charset) charset)))
 
 

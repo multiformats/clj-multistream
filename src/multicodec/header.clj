@@ -65,7 +65,7 @@
       encoded)))
 
 
-(defn write-header!
+(defn write!
   "Writes a multicodec header for `path` to the given stream. Returns the number
   of bytes written."
   [^OutputStream output path]
@@ -95,7 +95,7 @@
         content))))
 
 
-(defn read-header!
+(defn read!
   "Attempts to read a multicodec header from the given stream. Returns the
   header path.
 

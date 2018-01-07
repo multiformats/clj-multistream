@@ -2,8 +2,7 @@
   "Binary codec which simply encodes and decodes raw byte sequences."
   (:require
     [clojure.java.io :as io]
-    [multicodec.core :as codec :refer [defcodec defdecoder defencoder]]
-    [multicodec.header :as header])
+    [multicodec.core :as codec :refer [defcodec defdecoder defencoder]])
   (:import
     (java.io
       ByteArrayOutputStream
@@ -69,7 +68,7 @@
   (encode-stream
     [this _ stream]
     (let [output stream]
-      (header/write-header! output header)
+      (codec/write-header! output header)
       (->BinaryEncoderStream output)))
 
 

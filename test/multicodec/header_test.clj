@@ -74,28 +74,28 @@
       (aset-byte example 0 -128)
       (thrown-with-data?
         {:type ::header/invalid}
-        (header/read-header! bais))))
+        (header/read! bais))))
   (testing "missing newline"
     (let [example (byte-array 10)
           bais (ByteArrayInputStream. example)]
       (aset-byte example 0 5)
       (thrown-with-data?
         {:type ::header/invalid}
-        (header/read-header! bais)))))
+        (header/read! bais)))))
 
 
 (defn test-stream-roundtrip
   [^String path ^String content]
   (let [baos (ByteArrayOutputStream.)]
-    (testing "write-header!"
+    (testing "write!"
       (is (= (+ 2 (count (.getBytes path header/header-charset)))
-             (header/write-header! baos path))
+             (header/write! baos path))
           "should write correct number of bytes to stream"))
     (.write baos (.getBytes content))
     (let [content-bytes (.toByteArray baos)
           bais (ByteArrayInputStream. content-bytes)]
-      (testing "read-header!"
-        (is (= path (header/read-header! bais))
+      (testing "read!"
+        (is (= path (header/read! bais))
             "should read correct path from stream")
         (is (= content (slurp bais))
             "should leave stream correctly positioned")))))
@@ -109,14 +109,14 @@
   (let [baos (ByteArrayOutputStream.)]
     (testing "writing headers"
       (binding [header/*headers* []]
-        (header/write-header! baos "/foo/v1")
-        (header/write-header! baos "/bar/v3")
+        (header/write! baos "/foo/v1")
+        (header/write! baos "/bar/v3")
         (is (= ["/foo/v1" "/bar/v3"] header/*headers*)
             "should add to *headers*")))
     (testing "reading headers"
       (binding [header/*headers* []]
         (let [bais (ByteArrayInputStream. (.toByteArray baos))]
-          (is (= "/foo/v1" (header/read-header! bais)))
-          (is (= "/bar/v3" (header/read-header! bais))))
+          (is (= "/foo/v1" (header/read! bais)))
+          (is (= "/bar/v3" (header/read! bais))))
         (is (= ["/foo/v1" "/bar/v3"] header/*headers*)
             "should add to *headers*")))))
