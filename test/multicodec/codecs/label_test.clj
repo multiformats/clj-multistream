@@ -1,16 +1,16 @@
-(ns multicodec.codecs.wrap-test
+(ns multicodec.codecs.label-test
   (:require
     [clojure.test :refer :all]
+    [multicodec.codecs.label :as label]
     [multicodec.core :as codec]
-    [multicodec.header :as header]
-    [multicodec.test-utils :refer [mock-codec]]
-    [multicodec.codecs.wrap :as wrap])
+    [multicodec.header :as header])
   (:import
     (java.io
       ByteArrayInputStream
       ByteArrayOutputStream)))
 
 
+#_
 (deftest header-codec
   (let [foo (mock-codec :foo "/foo")
         wrapped (wrap/wrap-header foo)]
