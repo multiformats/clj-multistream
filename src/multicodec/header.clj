@@ -2,8 +2,8 @@
   "Functions for handling multicodec header paths.
 
   On error, these functions throw an `ExceptionInfo` with ex-data containing
-  `:type :multicodec/bad-header` to indicate the problem. The data map will also
-  usually have `:header` and `:length` entries."
+  `:type :multicodec.header/invalid` to indicate the problem. The data map will
+  also usually have `:header` and `:length` entries."
   (:require
     [clojure.string :as str])
   (:import
@@ -34,11 +34,10 @@
 
 
 (defn- bad-header-ex
-  "Creates an exception for a bad header value. The ex-data map will have
-  `:type :multicodec/bad-header` and any additional key-value pairs passed to
-  the function."
+  "Creates an exception for a bad header value. Any additional key-value pairs
+  passed to the function will be included in the exception data."
   [message & {:as info}]
-  (ex-info message (assoc info :type :multicodec/bad-header)))
+  (ex-info message (assoc info :type ::invalid)))
 
 
 
