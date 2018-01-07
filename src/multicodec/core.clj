@@ -115,14 +115,14 @@
   composing codecs together."
 
   (encoder-stream
-    [codec output select-codecs]
+    [factory output selectors]
     "Open a new encoder stream to write values to the given byte output.
 
-    The `select-codecs` argument may be a vector of either codec keywords or
+    The `selectors` argument may be a vector of either codec keywords or
     headers processable by one of the codecs in the factory.")
 
   (decoder-stream
-    [codec input]
+    [factory input]
     "Open a new decoding stream to read values from the given byte input."))
 
 
@@ -135,13 +135,13 @@
   [factory selector]
   (or (if (keyword? selector)
         (get factory selector)
-        (first (filter #(processable? % selector) (vals factory)))))
+        (first (filter #(processable? % selector) (vals factory))))
       (throw (ex-info (str "No codec found for selector " (pr-str selector))
                       {:selector selector
-                       :codecs (keys factory)})))
+                       :codecs (keys factory)}))))
 
 
-(defrecord MultiCodec
+(defrecord MuxCodecFactory
   []
 
   CodecFactory
@@ -154,7 +154,7 @@
                              (encode-stream codec selector stream)))
                          output selectors)]
       (when-not (satisfies? EncoderStream stream)
-        (throw (ex-info "Encoder selection did not result in an encoding stream!"
+        (throw (ex-info "Encoder selection did not result in an encoder stream!"
                         {:selectors selectors
                          :stream stream})))
       stream))
@@ -178,10 +178,14 @@
                           {:stream stream}))))))
 
 
-(defn multi-codec
-  "Construct a new multi-codec factory."
+(alter-meta! #'->MuxCodecFactory assoc :private true)
+(alter-meta! #'map->MuxCodecFactory assoc :private true)
+
+
+(defn mux
+  "Construct a new multiplexing codec factory."
   [& {:as opts}]
-  (map->MultiCodec opts))
+  (map->MuxCodecFactory opts))
 
 
 
