@@ -116,6 +116,7 @@
   composing codecs together."
 
   (encoder-stream
+    ^java.io.Closeable
     [factory output selectors]
     "Open a new encoder stream to write values to the given byte output.
 
@@ -123,6 +124,7 @@
     headers processable by one of the codecs in the factory.")
 
   (decoder-stream
+    ^java.io.Closeable
     [factory input]
     "Open a new decoding stream to read values from the given byte input."))
 
