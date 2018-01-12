@@ -1,8 +1,8 @@
-(ns multicodec.codec.filter-test
+(ns multistream.codec.filter-test
   (:require
     [clojure.test :refer :all]
-    [multicodec.codec.filter :as filter]
-    [multicodec.core :as codec]))
+    [multistream.codec :as codec]
+    [multistream.codec.filter :as filter]))
 
 
 (deftest filter-codec

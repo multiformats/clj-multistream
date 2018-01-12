@@ -1,9 +1,9 @@
-(ns multicodec.codec.bin-test
+(ns multistream.codec.bin-test
   (:require
     [clojure.test :refer :all]
-    [multicodec.codec.bin :as bin]
-    [multicodec.core :as codec]
-    [multicodec.header :as header])
+    [multistream.codec :as codec]
+    [multistream.codec.bin :as bin]
+    [multistream.header :as header])
   (:import
     (java.io
       ByteArrayInputStream
@@ -23,8 +23,8 @@
       (let [output-bytes (.toByteArray baos)]
         (is (= 18 (count output-bytes)))
         (let [input (ByteArrayInputStream. output-bytes)]
-          (is (= bin/header (header/read! input)))
-          (with-open [stream (codec/decode-byte-stream codec bin/header input)]
+          (is (= (:header codec) (header/read! input)))
+          (with-open [stream (codec/decode-byte-stream codec "/bin/" input)]
             (is (satisfies? codec/DecoderStream stream))
             (let [value (codec/read! stream)]
               (is (bytes? value))

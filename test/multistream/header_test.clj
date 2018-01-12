@@ -1,7 +1,7 @@
-(ns multicodec.header-test
+(ns multistream.header-test
   (:require
     [clojure.test :refer :all]
-    [multicodec.header :as header])
+    [multistream.header :as header])
   (:import
     (java.io
       ByteArrayInputStream

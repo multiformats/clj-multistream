@@ -1,13 +1,13 @@
-(ns multicodec.core-test
+(ns multistream.codec-test
   (:require
     [clojure.string :as str]
     [clojure.test :refer :all]
-    [multicodec.codec.bin :refer [bin-codec]]
-    [multicodec.codec.compress :refer [gzip-codec]]
-    [multicodec.codec.label :refer [label-codec]]
-    [multicodec.codec.text :refer [text-codec]]
-    [multicodec.core :as codec]
-    [multicodec.header :as header])
+    [multistream.codec :as codec]
+    [multistream.codec.bin :refer [bin-codec]]
+    [multistream.codec.compress :refer [gzip-codec]]
+    [multistream.codec.label :refer [label-codec]]
+    [multistream.codec.text :refer [text-codec]]
+    [multistream.header :as header])
   (:import
     (java.io
       ByteArrayInputStream
@@ -24,8 +24,8 @@
         "codec paths should start with a slash")))
 
 
-(deftest mux-codec-selection
-  (let [factory (codec/mux
+(deftest multi-codec-selection
+  (let [factory (codec/multi
                   :bin (bin-codec)
                   :foo (label-codec "/foo/")
                   :text (text-codec)
@@ -44,24 +44,24 @@
     (testing "direct codec selection"
       (let [baos (ByteArrayOutputStream.)]
         (with-open [encoder (codec/encoder-stream factory baos [:text])]
-          (is (= 16 (codec/write! encoder "hello multicodec")))
+          (is (= 17 (codec/write! encoder "hello multistream")))
           (is (= 14 (codec/write! encoder ", how are you?"))))
         (let [output-bytes (.toByteArray baos)]
-          (is (= 43 (count output-bytes)))
+          (is (= 44 (count output-bytes)))
           (with-open [decoder (codec/decoder-stream factory (ByteArrayInputStream. output-bytes))]
-            (is (= "hello multicodec, how are you?"
+            (is (= "hello multistream, how are you?"
                    (codec/read! decoder)))))))
     (testing "header codec selection"
       (let [baos (ByteArrayOutputStream.)]
         (with-open [encoder (codec/encoder-stream factory baos ["/foo/"
                                                                 "/gzip/"
                                                                 "/text/UTF-8"])]
-          (is (= 16 (codec/write! encoder "hello multicodec")))
+          (is (= 17 (codec/write! encoder "hello multistream")))
           (is (= 14 (codec/write! encoder ", how are you?"))))
         (let [output-bytes (.toByteArray baos)]
-          (is (= 78 (count output-bytes)))
+          (is (= 79 (count output-bytes)))
           (binding [header/*headers* []]
             (with-open [decoder (codec/decoder-stream factory (ByteArrayInputStream. output-bytes))]
-              (is (= "hello multicodec, how are you?"
+              (is (= "hello multistream, how are you?"
                      (codec/read! decoder))))
             (= ["/foo/" "/gzip/" "/text/UTF-8"] header/*headers*)))))))
