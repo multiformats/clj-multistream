@@ -1,8 +1,8 @@
-(ns multicodec.codec.compress
+(ns multistream.codec.compress
   "Compression codec which transforms the byte stream after it is encoded and
   before it is decoded by the next codec."
   (:require
-    [multicodec.core :as codec :refer [defcodec]])
+    [multistream.codec :as codec :refer [defcodec]])
   (:import
     (java.io
       InputStream

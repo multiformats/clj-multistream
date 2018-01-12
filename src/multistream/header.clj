@@ -1,18 +1,17 @@
-(ns multicodec.header
+(ns multistream.header
   "Functions for handling multicodec header paths.
 
   On error, these functions throw an `ExceptionInfo` with ex-data containing
-  `:type :multicodec.header/invalid` to indicate the problem. The data map will
+  `:type :multistream.header/invalid` to indicate the problem. The data map will
   also usually have `:header` and `:length` entries."
   (:require
     [clojure.string :as str])
   (:import
     (java.io
-      ByteArrayInputStream
-      ByteArrayOutputStream
       InputStream
       OutputStream)
-    java.nio.charset.Charset))
+    (java.nio.charset
+      StandardCharsets)))
 
 
 (def ^:dynamic *headers*
@@ -30,7 +29,7 @@
 
 (def ^:no-doc ^java.nio.charset.Charset header-charset
   "The character set that codec headers are encoded with."
-  (Charset/forName "UTF-8"))
+  StandardCharsets/UTF_8)
 
 
 (defn- bad-header-ex

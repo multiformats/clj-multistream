@@ -1,9 +1,9 @@
-(ns multicodec.codec.text
+(ns multistream.codec.text
   "Text codec which uses UTF-8 to serialize strings."
   (:require
     [clojure.java.io :as io]
     [clojure.string :as str]
-    [multicodec.core :as codec :refer [defcodec defdecoder defencoder]])
+    [multistream.codec :as codec :refer [defcodec defdecoder defencoder]])
   (:import
     (java.io
       InputStream

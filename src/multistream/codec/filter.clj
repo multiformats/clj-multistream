@@ -1,8 +1,8 @@
-(ns multicodec.codec.filter
+(ns multistream.codec.filter
   "Logical codec which wraps another codec to transform the data before it is
   encoded or after it is decoded."
   (:require
-    [multicodec.core :as codec :refer [defcodec defdecoder defencoder]]))
+    [multistream.codec :as codec :refer [defcodec defdecoder defencoder]]))
 
 
 (defencoder FilterEncoderStream
