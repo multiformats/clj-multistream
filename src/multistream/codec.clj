@@ -1,5 +1,5 @@
 (ns multistream.codec
-  "Core multicodec protocols and functions."
+  "Core multistream codec protocols and functions."
   (:require
     [multistream.header :as header])
   (:import
@@ -55,7 +55,7 @@
     of bytes the value was encoded to, though this may be different than the
     final bytes written.
 
-    Calls the error handler if the value cannot be written."))
+    This method should throw an exception if the value cannot be written."))
 
 
 (defprotocol DecoderStream
@@ -65,7 +65,11 @@
   (read!
     [stream]
     "Read the next value from the underlying byte stream. Returns the
-    decoded value. Calls the error handler if the read bytes are invalid."))
+    decoded value, or throws an exception on error.
+
+    If the end of the stream has been reached, this method should return the
+    value of the `:eof` attribute on the stream (if present), or throw an
+    ex-info with `:type :multistream.codec/eof`."))
 
 
 (defprotocol Codec
@@ -147,6 +151,7 @@
           (reduce (fn wrap-bytes
                     [[stream codecs] selector]
                     (let [codec (select-codec this selector)]
+                      ; TODO: could write the header for codecs?
                       [(encode-byte-stream codec selector stream)
                        (conj codecs codec)]))
                   [output []]
@@ -159,7 +164,9 @@
                 [stream [selector codec]]
                 (encode-value-stream codec selector stream))
               stream
-              (reverse (map vector selectors codecs)))))
+              (reverse (map vector selectors codecs))))
+    ; TODO: bind headers and assoc into EncoderStream?
+    )
 
 
   (decoder-stream
@@ -175,6 +182,7 @@
         (satisfies? DecoderStream stream)
           (reduce (fn wrap-values
                     [stream [header codec]]
+                    ; TODO: assoc headers into each stream to expose to codecs
                     (decode-value-stream codec header stream))
                   stream
                   (reverse (map vector headers codecs)))

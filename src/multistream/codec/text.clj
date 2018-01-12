@@ -83,6 +83,7 @@
         charset))))
 
 
+; TODO: buffer size? EOF?
 (defn text-codec
   "Creates a new text codec. If a charset is not provided, it defaults to UTF-8."
   ([]

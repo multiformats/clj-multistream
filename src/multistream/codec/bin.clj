@@ -1,16 +1,15 @@
 (ns multistream.codec.bin
-  "Binary codec which simply encodes and decodes raw byte sequences."
+  "Example binary codec which simply encodes and decodes raw byte arrays.
+
+  This codec is probably not going to be very useful in practice; if you're
+  working with raw bytes, you should just work with `InputStream` and
+  `OutputStream` directly."
   (:require
-    [clojure.java.io :as io]
     [multistream.codec :as codec :refer [defcodec defdecoder defencoder]])
   (:import
     (java.io
       InputStream
       OutputStream)))
-
-
-(def ^:const header "/bin/")
-
 
 
 ;; ## Encoding Protocol
@@ -86,4 +85,7 @@
   "Creates a new binary codec. A number may be given to specify the buffer size
   in bytes for decoding operations."
   [& {:as opts}]
-  (map->BinaryCodec (merge {:buffer-size 1024} opts)))
+  (map->BinaryCodec
+    (merge {:buffer-size 1024}
+           opts
+           {:header "/bin/"})))

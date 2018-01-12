@@ -5,6 +5,9 @@
     [multistream.codec :as codec :refer [defcodec defdecoder defencoder]]))
 
 
+; TODO: is this worth keeping? maybe rename to 'xform'?
+
+
 (defencoder FilterEncoderStream
   [stream f]
 
