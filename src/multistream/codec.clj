@@ -4,6 +4,8 @@
     [multistream.header :as header])
   (:import
     (java.io
+      ByteArrayInputStream
+      ByteArrayOutputStream
       InputStream
       OutputStream)))
 
@@ -254,15 +256,43 @@
   (map->MultiCodecFactory opts))
 
 
+(defn encode
+  "Encodes the given value using either a direct codec or a multicodec factory
+  and the given selectors. Returns a byte array containing the encoded value,
+  or throws an exception on error."
+  ([codec value]
+   (encode (multi :codec codec) [:codec] value))
+  ([factory selectors value]
+   (let [baos (ByteArrayOutputStream.)]
+     (with-open [encoder (encoder-stream factory selectors baos)]
+       (write! encoder value))
+     (.toByteArray baos))))
 
-;; ## Codec Utilities
 
-(defn write-header!
-  "Writes a multicodec header for `path` to the given stream. Returns the
-  number of bytes written."
-  [stream header]
-  (header/write! stream header))
+(defn decode
+  "Decodes the given byte array using either a direct codec or a multicodec
+  factory."
+  [codec-or-factory input]
+  (let [bais (ByteArrayInputStream. ^bytes input)]
+    (if (satisfies? CodecFactory codec-or-factory)
+      ; Use factory to decode against headers.
+      (with-open [decoder (decoder-stream codec-or-factory bais)]
+        (read! decoder))
+      ; Use direct codec.
+      (let [codec codec-or-factory
+            header (header/read! bais)]
+        (when-not (processable? codec header)
+          (throw (ex-info (str "Expected processable codec header but read "
+                               (pr-str header))
+                          {:header header})))
+        (with-open [decoder (->> bais
+                                 (decode-byte-stream codec header)
+                                 (decode-value-stream codec header))]
+          (read! decoder))))))
 
+
+
+;; ## Codec Implementation Utilities
 
 (defmacro defencoder
   "Define a new encoder stream record, filling in the protocol and `Closeable`
