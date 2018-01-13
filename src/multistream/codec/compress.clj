@@ -19,7 +19,6 @@
 
   (encode-byte-stream
     [this _ output-stream]
-    (codec/write-header! output-stream header)
     (GZIPOutputStream. ^OutputStream output-stream))
 
 

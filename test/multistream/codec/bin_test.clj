@@ -17,6 +17,7 @@
       (is (codec/processable? codec "/bin/"))
       (is (not (codec/processable? codec "/text/"))))
     (let [baos (ByteArrayOutputStream.)]
+      (header/write! baos "/bin/")
       (with-open [stream (codec/encode-byte-stream codec nil baos)]
         (is (satisfies? codec/EncoderStream stream))
         (is (= 11 (codec/write! stream (.getBytes content)))))

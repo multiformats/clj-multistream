@@ -12,12 +12,11 @@
 
   (encode-byte-stream
     [this selector output-stream]
-    (codec/write-header! output-stream header)
     output-stream))
 
 
 (defn label-codec
   "Creates a new codec which will write the given header before passing on the
   stream for further encoding."
-  [header]
-  (->LabelCodec header))
+  [header & {:as opts}]
+  (map->LabelCodec (assoc opts :header header)))

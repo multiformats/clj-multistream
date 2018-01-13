@@ -27,18 +27,6 @@
 (defcodec FilterCodec
   [header encode-fn decode-fn]
 
-  (processable?
-    [this hdr]
-    (and header (= hdr header)))
-
-
-  (encode-byte-stream
-    [this selector output-stream]
-    (when header
-      (codec/write-header! output-stream header))
-    output-stream)
-
-
   (encode-value-stream
     [this selector encoder-stream]
     (if encode-fn

@@ -18,6 +18,7 @@
     (is (= :stream (codec/decode-byte-stream codec nil :stream))
         "labels have no effect on decoding stream")
     (is (= baos (codec/encode-byte-stream codec nil baos)))
+    (header/write! baos "/foo/")
     (let [output-bytes (.toByteArray baos)
           input (ByteArrayInputStream. output-bytes)]
       (is (= "/foo/" (header/read! input))))))

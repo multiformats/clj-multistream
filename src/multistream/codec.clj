@@ -80,6 +80,11 @@
     [codec header]
     "Return true if this codec can process the given header.")
 
+  (select-header
+    [codec selector]
+    "Return the header string to use for this codec. Often, this will be the
+    same as the result of `(:header codec)`.")
+
   (encode-byte-stream
     [codec selector output-stream]
     "Apply encoding to the given stream of bytes. The stream should be a
@@ -109,7 +114,7 @@
 
   (encoder-stream
     ^java.io.Closeable
-    [factory output selectors]
+    [factory selectors output]
     "Open a new encoder stream to write values to the given byte output.
 
     The `selectors` argument may be a vector of either codec keywords or
@@ -136,37 +141,97 @@
                        :codecs (keys factory)}))))
 
 
+(defn- wrap-byte-encoders
+  "Wrap byte-encoding logic around the output stream for each selected codec.
+  Returns a tuple of the sequence of headers in the order written, and codecs
+  in the order used, and the wrapped stream,."
+  [factory selectors output]
+  (loop [stream output
+         selectors selectors
+         headers []
+         codecs []]
+    (if (seq selectors)
+      ; Select and wrap next codec.
+      (let [selector (first selectors)
+            codec (select-codec factory selector)
+            header (select-header codec selector)]
+        (header/write! stream header)
+        (recur (encode-byte-stream codec selector stream)
+               (next selectors)
+               (conj headers header)
+               (conj codecs codec)))
+      ; Done wrapping, return stream info.
+      [headers codecs stream])))
+
+
+(defn- wrap-byte-decoders
+  "Wrap byte-decoding logic around the input stream for each selected codec.
+  Returns a tuple of the sequence of headers in the order read, the selected
+  codecs, and the wrapped stream."
+  [factory input]
+  (loop [stream input
+         headers []
+         codecs []]
+    (cond
+      ; Finished building a decoder, so return.
+      (satisfies? DecoderStream stream)
+        [headers codecs stream]
+
+      ; Read a header from the input to dispatch.
+      (instance? InputStream stream)
+        (let [header (header/read! stream)
+              codec (select-codec factory header)]
+          (recur (decode-byte-stream codec header stream)
+                 (conj headers header)
+                 (conj codecs codec)))
+
+      :else
+        (throw (ex-info "Decoder dispatch resulted in unusable stream!"
+                        {:stream stream
+                         :headers headers})))))
+
+
+(defn- wrap-value-stream
+  "Wrap value-transform logic around the codec stream for the given sequence of
+  selected headers and codecs. Returns the wrapped stream.
+
+  Codecs are wrapped in reverse order, and each stream passed to a codec will
+  have the list of headers _following_ that codec inserted with the
+  `:multistream.codec/headers` key."
+  [codec-fn headers codecs encoder]
+  (loop [stream encoder
+         headers (reverse headers)
+         codecs (reverse codecs)]
+    (if (seq codecs)
+      ; Wrap next codec.
+      (let [header (first headers)
+            codec (first codecs)]
+        (recur (assoc (codec-fn codec header stream)
+                      ::headers (cons header (::headers stream)))
+               (next headers)
+               (next codecs)))
+      ; Done wrapping, return stream.
+      stream)))
+
+
 (defrecord MultiCodecFactory
   []
 
   CodecFactory
 
   (encoder-stream
-    [this output selectors]
+    [this selectors output]
     (when-not (instance? OutputStream output)
       (throw (ex-info "The output argument to encoder-stream must be a java.io.OutputStream"
                       {:output output
                        :selectors selectors})))
-    (let [[stream codecs]
-          (reduce (fn wrap-bytes
-                    [[stream codecs] selector]
-                    (let [codec (select-codec this selector)]
-                      ; TODO: could write the header for codecs?
-                      [(encode-byte-stream codec selector stream)
-                       (conj codecs codec)]))
-                  [output []]
-                  selectors)]
+    (let [[headers codecs stream] (wrap-byte-encoders this selectors output)]
       (when-not (satisfies? EncoderStream stream)
         (throw (ex-info "Encoder selection did not result in an encoder stream!"
                         {:selectors selectors
+                         :headers headers
                          :stream stream})))
-      (reduce (fn wrap-values
-                [stream [selector codec]]
-                (encode-value-stream codec selector stream))
-              stream
-              (reverse (map vector selectors codecs))))
-    ; TODO: bind headers and assoc into EncoderStream?
-    )
+      (wrap-value-stream encode-value-stream headers codecs stream)))
 
 
   (decoder-stream
@@ -174,31 +239,9 @@
     (when-not (instance? InputStream input)
       (throw (ex-info "The input argument to decoder-stream must be a java.io.InputStream"
                       {:input input})))
-    (loop [stream input
-           headers []
-           codecs []]
-      (cond
-        ;; Finished building a decoder, so return.
-        (satisfies? DecoderStream stream)
-          (reduce (fn wrap-values
-                    [stream [header codec]]
-                    ; TODO: assoc headers into each stream to expose to codecs
-                    (decode-value-stream codec header stream))
-                  stream
-                  (reverse (map vector headers codecs)))
-
-        ;; Read a header from the input to dispatch.
-        (instance? InputStream stream)
-          (let [header (header/read! stream)
-                codec (select-codec this header)]
-            (recur (decode-byte-stream codec header stream)
-                   (conj headers header)
-                   (conj codecs codec)))
-
-        :else
-          (throw (ex-info "Decoder dispatch resulted in unusable stream!"
-                          {:stream stream
-                           :headers headers}))))))
+    (apply wrap-value-stream
+           decode-value-stream
+           (wrap-byte-decoders this input))))
 
 
 (alter-meta! #'->MultiCodecFactory assoc :private true)
@@ -306,6 +349,10 @@
             `([this# header#]
               (= header# (:header this#))))
 
+         ~(method* 'select-header
+            `([this# selector#]
+              (:header this#)))
+
          ~(method* 'encode-byte-stream
             `([this# selector# output-stream#]
               output-stream#))
@@ -324,6 +371,7 @@
 
          ~@(vals (dissoc codec-methods
                          'processable?
+                         'select-header
                          'encode-byte-stream
                          'encode-value-stream
                          'decode-byte-stream
