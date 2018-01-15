@@ -47,17 +47,29 @@
 
 (defdecoder TextDecoderStream
   [^InputStreamReader reader
-   ^Charset charset]
+   ^chars buffer
+   eof]
 
   (read!
     [this]
-    (let [writer (StringWriter.)]
-      (io/copy reader writer)
-      (.toString writer))))
+    (let [len (.read reader buffer)]
+      (cond
+        (neg? len)
+          (if (some? eof)
+            eof
+            (throw (ex-info "End of stream reached"
+                            {:type ::codec/eof})))
+
+        (pos? len)
+          (String. buffer 0 len)
+
+        :else nil))))
 
 
 (defcodec TextCodec
-  [^Charset default-charset]
+  [^Charset default-charset
+   buffer-size
+   eof]
 
   (processable?
     [this header]
@@ -85,13 +97,14 @@
           header (charset->header charset)]
       (->TextDecoderStream
         (InputStreamReader. ^InputStream input-stream charset)
-        charset))))
+        (char-array buffer-size)
+        eof))))
 
 
-; TODO: buffer size? EOF?
 (defn text-codec
   "Creates a new text codec. If a charset is not provided, it defaults to UTF-8."
-  ([]
-   (text-codec (Charset/forName "UTF-8")))
-  ([default-charset]
-   (->TextCodec default-charset)))
+  [& {:as opts}]
+  (map->TextCodec
+    (merge {:default-charset (Charset/forName "UTF-8")
+            :buffer-size 512}
+           opts)))
