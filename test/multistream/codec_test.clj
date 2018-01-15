@@ -5,7 +5,7 @@
     [multistream.codec :as codec]
     [multistream.codec.bin :refer [bin-codec]]
     [multistream.codec.compress :refer [gzip-codec]]
-    [multistream.codec.label :refer [label-codec]]
+    [multistream.codec.transform :refer [transform-codec]]
     [multistream.codec.text :refer [text-codec]]
     [multistream.header :as header])
   (:import
@@ -27,7 +27,7 @@
 (deftest multi-codec-selection
   (let [factory (codec/multi
                   :bin (bin-codec)
-                  :foo (label-codec "/foo/")
+                  :foo (transform-codec "/foo/")
                   :text (text-codec)
                   :gzip (gzip-codec))]
     (testing "bad encoder args"
