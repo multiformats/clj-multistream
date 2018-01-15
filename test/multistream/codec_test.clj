@@ -64,3 +64,21 @@
             (is (= headers (::codec/headers decoder)))
             (is (= "hello multistream, how are you?"
                    (codec/read! decoder)))))))))
+
+
+(deftest byte-encoding-utils
+  (testing "direct codec use"
+    (let [codec (text-codec)
+          byte-arr (codec/encode codec "nuke-a-cola")]
+      (is (= 24 (count byte-arr)))
+      (is (= "nuke-a-cola" (codec/decode codec byte-arr)))
+      (is (thrown-with-msg? Exception #"processable codec header"
+            (codec/decode (bin-codec) byte-arr)))))
+  (testing "factory selection"
+   (let [factory (codec/multi
+                  :foo (transform-codec "/foo/" :encode-fn str/upper-case)
+                  :text (text-codec)
+                  :gzip (gzip-codec))
+         byte-arr (codec/encode factory [:foo :gzip :text] "nuke-a-cola")]
+      (is (= 59 (count byte-arr)))
+      (is (= "NUKE-A-COLA" (codec/decode factory byte-arr))))))
