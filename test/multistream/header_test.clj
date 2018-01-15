@@ -108,15 +108,9 @@
 (deftest header-collecting-var
   (let [baos (ByteArrayOutputStream.)]
     (testing "writing headers"
-      (binding [header/*headers* []]
-        (header/write! baos "/foo/v1")
-        (header/write! baos "/bar/v3")
-        (is (= ["/foo/v1" "/bar/v3"] header/*headers*)
-            "should add to *headers*")))
+      (header/write! baos "/foo/v1")
+      (header/write! baos "/bar/v3"))
     (testing "reading headers"
-      (binding [header/*headers* []]
-        (let [bais (ByteArrayInputStream. (.toByteArray baos))]
-          (is (= "/foo/v1" (header/read! bais)))
-          (is (= "/bar/v3" (header/read! bais))))
-        (is (= ["/foo/v1" "/bar/v3"] header/*headers*)
-            "should add to *headers*")))))
+      (let [bais (ByteArrayInputStream. (.toByteArray baos))]
+        (is (= "/foo/v1" (header/read! bais)))
+        (is (= "/bar/v3" (header/read! bais)))))))
