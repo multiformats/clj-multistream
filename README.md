@@ -1,7 +1,7 @@
 clj-multistream
 ===============
 
-[![Build Status](https://api.travis-ci.org/multiformats/clj-multistream.svg?branch=develop)](https://travis-ci.org/multiformats/clj-multistream)
+[![CircleCI](https://circleci.com/gh/multiformats/clj-multistream/tree/develop.svg?style=shield&circle-token=42759f9031db82a53ecf03327cd673bc57043e62)](https://circleci.com/gh/multiformats/clj-multistream/tree/develop)
 [![Coverage Status](https://coveralls.io/repos/multiformats/clj-multistream/badge.svg?branch=develop&service=github)](https://coveralls.io/github/multiformats/clj-multistream?branch=develop)
 [![API codox](https://img.shields.io/badge/doc-API-blue.svg)](https://multiformats.github.io/clj-multistream/api/)
 [![marginalia docs](https://img.shields.io/badge/doc-marginalia-blue.svg)](https://multiformats.github.io/clj-multistream/marginalia/uberdoc.html)
