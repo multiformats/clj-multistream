@@ -44,6 +44,12 @@
    :utf8 "/text/UTF-8"})
 
 
+(def ^:dynamic *eof-guard*
+  "When bound to a non-nil value, decoder streams will return this instead of
+  throwing an exception when the end of the input stream is reached."
+  nil)
+
+
 
 ;; ## Codec Protocols
 
@@ -70,8 +76,8 @@
     decoded value, or throws an exception on error.
 
     If the end of the stream has been reached, this method should return the
-    value of the `:eof` attribute on the stream (if present), or throw an
-    ex-info with `:type :multistream.codec/eof`."))
+    value of `*eof-guard*` if it is bound, or throw an ex-info with `:type
+    :multistream.codec/eof`."))
 
 
 (defprotocol Codec
@@ -255,6 +261,9 @@
   [& {:as opts}]
   (map->MultiCodecFactory opts))
 
+
+
+;; ## Coding Utilities
 
 (defn encode
   "Encodes the given value using either a direct codec or a multicodec factory

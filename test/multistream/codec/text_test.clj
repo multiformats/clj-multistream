@@ -37,5 +37,5 @@
       (let [bais (ByteArrayInputStream. (byte-array 0))]
         (with-open [decoder (codec/decode-byte-stream codec nil bais)]
           (is (err-thrown? ::codec/eof (codec/read! decoder)))
-          (let [guard (Object.)]
-            (is (identical? guard (codec/read! (assoc decoder :eof guard))))))))))
+          (binding [codec/*eof-guard* (Object.)]
+            (is (identical? codec/*eof-guard* (codec/read! decoder)))))))))

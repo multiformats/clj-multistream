@@ -45,16 +45,16 @@
 
 
 (defdecoder BinaryDecoderStream
-  [^InputStream input ^bytes buffer eof]
+  [^InputStream input ^bytes buffer]
 
   (read!
     [this]
     (let [len (.read input buffer)]
       (cond
         (neg? len)
-          (if (some? eof)
-            eof
-            (throw (ex-info "End of stream reached"
+          (if (some? codec/*eof-guard*)
+            codec/*eof-guard*
+            (throw (ex-info "End of input stream reached"
                             {:type ::codec/eof})))
 
         (pos? len)
@@ -66,7 +66,7 @@
 
 
 (defcodec BinaryCodec
-  [header buffer-size eof]
+  [header buffer-size]
 
   (encode-byte-stream
     [this _ output-stream]
@@ -75,10 +75,7 @@
 
   (decode-byte-stream
     [this _ input-stream]
-    (->BinaryDecoderStream
-      input-stream
-      (byte-array buffer-size)
-      eof)))
+    (->BinaryDecoderStream input-stream (byte-array buffer-size))))
 
 
 (defn bin-codec

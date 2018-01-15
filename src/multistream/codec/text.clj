@@ -45,19 +45,19 @@
       (count (.getBytes content charset)))))
 
 
+; TODO: make this read lines instead?
 (defdecoder TextDecoderStream
   [^InputStreamReader reader
-   ^chars buffer
-   eof]
+   ^chars buffer]
 
   (read!
     [this]
     (let [len (.read reader buffer)]
       (cond
         (neg? len)
-          (if (some? eof)
-            eof
-            (throw (ex-info "End of stream reached"
+          (if (some? codec/*eof-guard*)
+            codec/*eof-guard*
+            (throw (ex-info "End of reader stream reached"
                             {:type ::codec/eof})))
 
         (pos? len)
@@ -67,9 +67,7 @@
 
 
 (defcodec TextCodec
-  [^Charset default-charset
-   buffer-size
-   eof]
+  [^Charset default-charset buffer-size]
 
   (processable?
     [this header]
@@ -97,8 +95,7 @@
           header (charset->header charset)]
       (->TextDecoderStream
         (InputStreamReader. ^InputStream input-stream charset)
-        (char-array buffer-size)
-        eof))))
+        (char-array buffer-size)))))
 
 
 (defn text-codec
