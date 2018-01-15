@@ -55,7 +55,7 @@
           (if (some? eof)
             eof
             (throw (ex-info "End of stream reached"
-                            {:type ::eof})))
+                            {:type ::codec/eof})))
 
         (pos? len)
           (let [data (byte-array len)]

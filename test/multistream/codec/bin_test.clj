@@ -3,7 +3,8 @@
     [clojure.test :refer :all]
     [multistream.codec :as codec]
     [multistream.codec.bin :as bin]
-    [multistream.header :as header])
+    [multistream.header :as header]
+    [multistream.test-utils :as tu])
   (:import
     (java.io
       ByteArrayInputStream
@@ -29,4 +30,10 @@
             (is (satisfies? codec/DecoderStream stream))
             (let [value (codec/read! stream)]
               (is (bytes? value))
-              (is (= content (String. value))))))))))
+              (is (= content (String. value))))))))
+    (testing "eof behavior"
+      (let [bais (ByteArrayInputStream. (byte-array 0))]
+        (with-open [decoder (codec/decode-byte-stream codec nil bais)]
+          (is (err-thrown? ::codec/eof (codec/read! decoder)))
+          (let [guard (Object.)]
+            (is (identical? guard (codec/read! (assoc decoder :eof guard))))))))))
