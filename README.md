@@ -2,7 +2,7 @@ clj-multistream
 ===============
 
 [![CircleCI](https://circleci.com/gh/multiformats/clj-multistream/tree/develop.svg?style=shield&circle-token=42759f9031db82a53ecf03327cd673bc57043e62)](https://circleci.com/gh/multiformats/clj-multistream/tree/develop)
-[![Coverage Status](https://coveralls.io/repos/multiformats/clj-multistream/badge.svg?branch=develop&service=github)](https://coveralls.io/github/multiformats/clj-multistream?branch=develop)
+[![codecov](https://codecov.io/gh/multiformats/clj-multistream/branch/develop/graph/badge.svg)](https://codecov.io/gh/multiformats/clj-multistream)
 [![API codox](https://img.shields.io/badge/doc-API-blue.svg)](https://multiformats.github.io/clj-multistream/api/)
 [![marginalia docs](https://img.shields.io/badge/doc-marginalia-blue.svg)](https://multiformats.github.io/clj-multistream/marginalia/uberdoc.html)
 [![](https://img.shields.io/badge/freenode-%23ipfs-blue.svg?style=flat-square)](https://webchat.freenode.net/?channels=%23ipfs)
