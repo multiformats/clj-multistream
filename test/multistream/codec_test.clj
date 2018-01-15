@@ -75,10 +75,19 @@
       (is (thrown-with-msg? Exception #"processable codec header"
             (codec/decode (bin-codec) byte-arr)))))
   (testing "factory selection"
-   (let [factory (codec/multi
-                  :foo (transform-codec "/foo/" :encode-fn str/upper-case)
-                  :text (text-codec)
-                  :gzip (gzip-codec))
-         byte-arr (codec/encode factory [:foo :gzip :text] "nuke-a-cola")]
+    (let [factory (codec/multi
+                    :foo (transform-codec "/foo/" :encode-fn str/upper-case)
+                    :text (text-codec)
+                    :gzip (gzip-codec))
+           byte-arr (codec/encode factory [:foo :gzip :text] "nuke-a-cola")]
       (is (= 59 (count byte-arr)))
       (is (= "NUKE-A-COLA" (codec/decode factory byte-arr))))))
+
+
+(deftest reducible-decoders
+  (let [factory (codec/multi :text (text-codec :buffer-size 4))
+        byte-arr (codec/encode factory [:text] "foo\nbar\nbaz\n")]
+    (with-open [decoder (codec/decoder-stream factory (ByteArrayInputStream. byte-arr))]
+      (is (= ["foo\n" "bar\n" "baz\n"] (into [] decoder))))
+    (with-open [decoder (codec/decoder-stream factory (ByteArrayInputStream. byte-arr))]
+      (is (= ["bar\n"] (into [] (comp (drop 1) (take 1)) decoder))))))

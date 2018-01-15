@@ -285,10 +285,27 @@
           (throw (ex-info (str "Expected processable codec header but read "
                                (pr-str header))
                           {:header header})))
-        (with-open [decoder (->> bais
-                                 (decode-byte-stream codec header)
-                                 (decode-value-stream codec header))]
+        (with-open [^java.io.Closeable decoder
+                    (->> bais
+                         (decode-byte-stream codec header)
+                         (decode-value-stream codec header))]
           (read! decoder))))))
+
+
+(defn ^:no-doc reduce-decoder
+  "Runs a reducing function over the values read from the decoder stream. In
+  practice, this function shouldn't be needed directly - just use the stream
+  directly with functions which take reducible collections."
+  [stream rf init]
+  (binding [*eof-guard* (Object.)]
+    (loop [result init]
+      (let [value (read! stream)]
+        (if (identical? value *eof-guard*)
+          result
+          (let [result (rf result value)]
+            (if (reduced? result)
+               @result
+               (recur result))))))))
 
 
 
@@ -348,8 +365,11 @@
 
        ~@more
 
-       ; TODO: Seqable
-       ; TODO: IReduceInit
+       clojure.lang.IReduceInit
+
+       (reduce
+         [this# rf# init#]
+         (reduce-decoder this# rf# init#))
 
        java.io.Closeable
 
