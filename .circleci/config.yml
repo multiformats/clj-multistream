@@ -8,13 +8,13 @@ jobs:
       - checkout
       - restore_cache:
           keys:
-            - clj-multicodec-{{ checksum "project.clj" }}
-            - clj-multicodec-
+            - clj-multistream-{{ checksum "project.clj" }}
+            - clj-multistream-
       - run: lein deps
       - save_cache:
           paths:
             - ~/.m2
-          key: clj-multicodec-{{ checksum "project.clj" }}
+          key: clj-multistream-{{ checksum "project.clj" }}
       - run: lein do check, test
       - run: lein with-profile +coverage cloverage --codecov
       - store_artifacts:

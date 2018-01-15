@@ -1,6 +1,6 @@
-(defproject mvxcvi/multistream "0.2.0-SNAPSHOT"
-  :description "Clojure implementation of the multicodec standard."
-  :url "https://github.com/multiformats/clj-multicodec"
+(defproject mvxcvi/multistream "0.7.0-SNAPSHOT"
+  :description "Clojure implementation of the multistream standard."
+  :url "https://github.com/multiformats/clj-multistream"
   :license {:name "Public Domain"
             :url "http://unlicense.org/"}
 
@@ -18,7 +18,7 @@
 
   :codox
   {:metadata {:doc/format :markdown}
-   :source-uri "https://github.com/multiformats/clj-multicodec/blob/master/{filepath}#L{line}"
+   :source-uri "https://github.com/multiformats/clj-multistream/blob/master/{filepath}#L{line}"
    :output-path "target/doc/api"}
 
   :profiles

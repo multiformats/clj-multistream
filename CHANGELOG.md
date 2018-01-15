@@ -7,7 +7,13 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
-...
+This version is an extremely breaking change, essentially rewriting the library
+as `clj-multistream` to reflect the updated name in the multiformats standard.
+Many things have changed in the process; the biggest change is to the way that
+codecs are composed and that encoding and decoding streams are first-class
+concepts now.
+
+**TODO:** more notes
 
 ## [0.5.1] - 2016-02-04
 
