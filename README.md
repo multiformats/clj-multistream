@@ -1,20 +1,20 @@
-clj-multicodec
-==============
+clj-multistream
+===============
 
-[![Build Status](https://api.travis-ci.org/greglook/clj-multicodec.svg?branch=develop)](https://travis-ci.org/greglook/clj-multicodec)
-[![Coverage Status](https://coveralls.io/repos/greglook/clj-multicodec/badge.svg?branch=develop&service=github)](https://coveralls.io/github/greglook/clj-multicodec?branch=develop)
-[![API codox](https://img.shields.io/badge/doc-API-blue.svg)](https://multiformats.github.io/clj-multicodec/api/)
-[![marginalia docs](https://img.shields.io/badge/doc-marginalia-blue.svg)](https://multiformats.github.io/clj-multicodec/marginalia/uberdoc.html)
+[![Build Status](https://api.travis-ci.org/multiformats/clj-multistream.svg?branch=develop)](https://travis-ci.org/multiformats/clj-multistream)
+[![Coverage Status](https://coveralls.io/repos/multiformats/clj-multistream/badge.svg?branch=develop&service=github)](https://coveralls.io/github/multiformats/clj-multistream?branch=develop)
+[![API codox](https://img.shields.io/badge/doc-API-blue.svg)](https://multiformats.github.io/clj-multistream/api/)
+[![marginalia docs](https://img.shields.io/badge/doc-marginalia-blue.svg)](https://multiformats.github.io/clj-multistream/marginalia/uberdoc.html)
 [![](https://img.shields.io/badge/freenode-%23ipfs-blue.svg?style=flat-square)](https://webchat.freenode.net/?channels=%23ipfs)
 [![](https://img.shields.io/badge/project-multiformats-blue.svg?style=flat-square)](https://github.com/multiformats/multiformats)
 [![](https://img.shields.io/badge/readme%20style-standard-brightgreen.svg?style=flat-square)](https://github.com/RichardLitt/standard-readme)
 
-> Clojure implementation of multicodec headers
+> Clojure implementation of multistream codecs
 
 A Clojure library implementing the
-[multicodec](https://github.com/multiformats/multicodec) standard. This provides a
-content-agnostic way to prefix binary data with its encoding in a way that is
-both human and machine-readable.
+[multistream](https://github.com/multiformats/multistream) standard. This
+provides a content-agnostic way to prefix binary data with its encoding in a way
+that is both human and machine-readable.
 
 ## Table of Contents
 
@@ -29,7 +29,7 @@ both human and machine-readable.
 Library releases are published on Clojars. To use the latest version with
 Leiningen, add the following dependency to your project definition:
 
-[![Clojars Project](https://clojars.org/mvxcvi/multicodec/latest-version.svg)](https://clojars.org/mvxcvi/multicodec)
+[![Clojars Project](https://clojars.org/mvxcvi/multistream/latest-version.svg)](https://clojars.org/mvxcvi/multistream)
 
 ## Usage
 
@@ -139,7 +139,7 @@ Captain: [@greglook](https://github.com/greglook).
 
 ## Contribute
 
-Contributions welcome. Please check out [the issues](https://github.com/multiformats/clj-multicodec/issues).
+Contributions welcome. Please check out [the issues](https://github.com/multiformats/clj-multistream/issues).
 
 Check out our [contributing document](https://github.com/multiformats/multiformats/blob/master/contributing.md) for more information on how we work, and about contributing in general. Please be aware that all interactions related to multiformats are subject to the IPFS [Code of Conduct](https://github.com/ipfs/community/blob/master/code-of-conduct.md).
 
