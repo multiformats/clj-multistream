@@ -181,7 +181,7 @@ the next codec. The final codec must be a format codec, which creates a _value
 stream_ from a raw byte stream. The value stream is then wrapped by each codec
 in reverse order, and the user receives the final stream.
 
-![stream construction](doc/stream-construction.jpg)
+![stream construction](doc/stream-construction.png)
 
 The above example illustrates the code examples above. The `xform` and `gzip`
 codecs are wrappers around the `text` format. The result will be a composite
