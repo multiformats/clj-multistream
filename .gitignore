@@ -1,6 +1,5 @@
-/doc/
-/target/
 /checkouts/
+/target/
 /.lein-*
 /.nrepl-port
 pom.xml
