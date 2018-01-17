@@ -39,7 +39,9 @@
 
 
 (defn transform-codec
-  "Creates a new filter codec, wrapping the given codec. Opts may include:
+  "Creates a new filter codec, identified by the given header.
+
+  Opts may include:
 
   - `:encode-fn`
     If provided, the function will transform values before they are encoded.

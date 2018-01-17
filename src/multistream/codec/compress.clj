@@ -1,6 +1,6 @@
 (ns multistream.codec.compress
-  "Compression codec which transforms the byte stream after it is encoded and
-  before it is decoded by the next codec."
+  "Compression codecs transform the byte stream after it is encoded and before
+  it is decoded by the next codec."
   (:require
     [multistream.codec :as codec :refer [defcodec]])
   (:import
