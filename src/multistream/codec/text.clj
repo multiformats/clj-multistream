@@ -55,7 +55,7 @@
     (let [len (.read reader buffer)]
       (cond
         (neg? len)
-          (if (some? codec/*eof-guard*)
+          (if (thread-bound? #'codec/*eof-guard*)
             codec/*eof-guard*
             (throw (ex-info "End of reader stream reached"
                             {:type ::codec/eof})))
