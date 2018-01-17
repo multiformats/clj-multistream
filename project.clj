@@ -1,4 +1,4 @@
-(defproject mvxcvi/multistream "0.7.0-SNAPSHOT"
+(defproject mvxcvi/multistream "0.7.0"
   :description "Clojure implementation of the multistream standard."
   :url "https://github.com/multiformats/clj-multistream"
   :license {:name "Public Domain"
