@@ -52,10 +52,7 @@
     (let [len (.read input buffer)]
       (cond
         (neg? len)
-          (if (thread-bound? #'codec/*eof-guard*)
-            codec/*eof-guard*
-            (throw (ex-info "End of input stream reached"
-                            {:type ::codec/eof})))
+          (codec/eof-error!)
 
         (pos? len)
           (let [data (byte-array len)]
