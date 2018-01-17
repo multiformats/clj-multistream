@@ -9,7 +9,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ...
 
-## [0.7.0] - 2018-01-16
+## [0.7.1] - 2018-01-17
 
 This version is an extremely breaking change, essentially rewriting the library
 as `clj-multistream` to reflect the updated name in the multiformats standard.
@@ -79,8 +79,8 @@ or decoding a header, respectively.
 
 Initial project release
 
-[Unreleased]: https://github.com/greglook/clj-multicodec/compare/0.7.0...HEAD
-[0.7.0]: https://github.com/greglook/clj-multicodec/compare/0.5.1...0.7.0
+[Unreleased]: https://github.com/greglook/clj-multicodec/compare/0.7.1...HEAD
+[0.7.1]: https://github.com/greglook/clj-multicodec/compare/0.5.1...0.7.1
 [0.5.1]: https://github.com/greglook/clj-multicodec/compare/0.5.0...0.5.1
 [0.5.0]: https://github.com/greglook/clj-multicodec/compare/0.4.0...0.5.0
 [0.4.0]: https://github.com/greglook/clj-multicodec/compare/0.3.0...0.4.0
