@@ -326,6 +326,19 @@
 
 ;; ## Codec Implementation Utilities
 
+(defn ^:no-doc eof-error!
+  "Returns `*eof-guard*` if bound, else throws an exception with `:type
+  :multistream.codec/eof` as specified by the `DecoderStream` protocol."
+  ([]
+   (eof-error! "End of input stream reached"))
+  ([message]
+   (eof-error! message nil))
+  ([message data]
+   (if (thread-bound? #'*eof-guard*)
+     *eof-guard*
+     (throw (ex-info message (assoc data :type ::eof))))))
+
+
 (defmacro defencoder
   "Define a new encoder stream record, filling in the protocol and `Closeable`
   implementation. The first record attribute must be the wrapped stream.

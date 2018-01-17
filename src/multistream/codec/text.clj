@@ -55,10 +55,7 @@
     (let [len (.read reader buffer)]
       (cond
         (neg? len)
-          (if (thread-bound? #'codec/*eof-guard*)
-            codec/*eof-guard*
-            (throw (ex-info "End of reader stream reached"
-                            {:type ::codec/eof})))
+          (codec/eof-error!)
 
         (pos? len)
           (String. buffer 0 len)
