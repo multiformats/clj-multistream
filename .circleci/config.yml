@@ -1,25 +1,18 @@
-version: 2
+version: '2.1'
+orbs:
+  gh: circleci/github-cli@2.0
 jobs:
-  build:
-    working_directory: ~/repo
+  get-token:
     docker:
-      - image: circleci/clojure:lein-2.7.1
+      - image: 'cimg/base:stable'
     steps:
-      - checkout
-      - restore_cache:
-          keys:
-            - clj-multistream-{{ checksum "project.clj" }}
-            - clj-multistream-
-      - run: lein deps
-      - save_cache:
-          paths:
-            - ~/.m2
-          key: clj-multistream-{{ checksum "project.clj" }}
-      - run: lein do check, test
-      - run: lein with-profile +coverage cloverage --codecov
-      - store_artifacts:
-          path: target/coverage
-          destination: coverage
+      - gh/install
       - run:
-          name: Publish Coverage
-          command: "(curl -s https://codecov.io/bash > codecov) && bash codecov -f target/coverage/codecov.json"
+          command: |
+            gh api /user
+          name: Get Token
+workflows:
+  get-token:
+    jobs:
+      - get-token:
+          context: ipfs-dns-deploy
